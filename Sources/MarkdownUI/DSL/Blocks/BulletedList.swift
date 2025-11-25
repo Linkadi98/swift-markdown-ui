@@ -61,6 +61,7 @@ import Foundation
 /// ```
 ///
 /// ![](NestedBulletedList)
+@available(iOS 15.0, *)
 public struct BulletedList: MarkdownContentProtocol {
   public var _markdownContent: MarkdownContent {
     .init(blocks: [.bulletedList(isTight: self.tight, items: self.items)])

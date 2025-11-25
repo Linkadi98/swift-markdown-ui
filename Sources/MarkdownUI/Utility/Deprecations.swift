@@ -44,6 +44,7 @@ extension BlockStyle where Configuration == BlockConfiguration {
   }
 }
 
+@available(iOS 15.0, *)
 extension View {
   @available(
     *,
@@ -324,6 +325,7 @@ public typealias InlineCode = Code
     types "DefaultImageProvider" and "AssetImageProvider".
     """
 )
+@available(iOS 15.0, *)
 public struct MarkdownImageHandler {
   public static var networkImage: Self {
     fatalError("Unimplemented")
@@ -337,6 +339,7 @@ public struct MarkdownImageHandler {
   }
 }
 
+@available(iOS 15.0, *)
 extension Markdown {
   @available(
     *,
@@ -354,6 +357,7 @@ extension Markdown {
   }
 }
 
+@available(iOS 15.0, *)
 extension View {
   @available(
     *,
@@ -373,6 +377,7 @@ extension View {
     "BlockStyle" types.
     """
 )
+@available(iOS 15.0, *)
 public struct MarkdownStyle: Hashable {
   public struct Font: Hashable {
     public static var largeTitle: Self { fatalError("Unimplemented") }
@@ -483,6 +488,7 @@ public struct MarkdownStyle: Hashable {
   }
 }
 
+@available(iOS 15.0, *)
 extension View {
   @available(
     *,

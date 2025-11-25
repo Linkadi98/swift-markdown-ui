@@ -1,5 +1,6 @@
 import SwiftUI
 
+@available(iOS 15.0, *)
 struct BlockMargin: Equatable {
   var top: CGFloat?
   var bottom: CGFloat?
@@ -7,6 +8,7 @@ struct BlockMargin: Equatable {
   static let unspecified = BlockMargin()
 }
 
+@available(iOS 15.0, *)
 extension View {
   /// Sets the preferred top margin for the block content in this view.
   ///

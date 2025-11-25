@@ -1,5 +1,6 @@
 import SwiftUI
 
+@available(iOS 15.0, *)
 struct TableBounds {
   var rowCount: Int {
     self.rows.count

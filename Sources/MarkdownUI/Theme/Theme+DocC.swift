@@ -1,5 +1,6 @@
 import SwiftUI
 
+@available(iOS 15.0, *)
 extension Theme {
   /// A theme that mimics the DocC style.
   ///
@@ -147,6 +148,7 @@ extension Theme {
     }
 }
 
+@available(iOS 15.0, *)
 extension Shape where Self == RoundedRectangle {
   fileprivate static var container: Self {
     .init(cornerRadius: 15, style: .continuous)

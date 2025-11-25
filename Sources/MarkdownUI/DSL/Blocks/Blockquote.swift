@@ -19,6 +19,7 @@ import Foundation
 /// ```
 ///
 /// ![](BlockquoteContent)
+@available(iOS 15.0, *)
 public struct Blockquote: MarkdownContentProtocol {
   public var _markdownContent: MarkdownContent {
     .init(blocks: [.blockquote(children: content.blocks)])

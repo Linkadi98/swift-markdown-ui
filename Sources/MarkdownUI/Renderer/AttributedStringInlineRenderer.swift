@@ -158,6 +158,7 @@ private struct AttributedStringInlineRenderer {
   }
 }
 
+@available(iOS 15.0, *)
 extension TextStyle {
   fileprivate func mergingAttributes(_ attributes: AttributeContainer) -> AttributeContainer {
     var newAttributes = attributes
