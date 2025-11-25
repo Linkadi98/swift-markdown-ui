@@ -4,6 +4,7 @@ import SwiftUI
 ///
 /// To configure the current code syntax highlighter for a view hierarchy, use the
 /// `markdownCodeSyntaxHighlighter(_:)` modifier.
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public protocol CodeSyntaxHighlighter {
   /// Returns a text view configured with the syntax highlighted code.
   /// - Parameters:

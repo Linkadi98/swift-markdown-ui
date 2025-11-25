@@ -1,5 +1,6 @@
 import Foundation
 
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 enum FontPropertiesAttribute: AttributedStringKey {
   typealias Value = FontProperties
   static let name = "fontProperties"

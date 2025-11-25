@@ -6,6 +6,7 @@ import Foundation
 /// you declare in any closure with the `@MarkdownContentBuilder` attribute. In particular, you rely on
 /// this behavior when you declare the `content` inside a Markdown view initializer such as
 /// ``Markdown/init(baseURL:imageBaseURL:content:)``.
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @resultBuilder public enum MarkdownContentBuilder {
   public static func buildBlock(_ components: MarkdownContentProtocol...) -> MarkdownContent {
     .init(components)

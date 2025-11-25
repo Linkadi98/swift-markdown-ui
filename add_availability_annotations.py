@@ -66,16 +66,55 @@ def add_availability_annotations(file_path, ios_version="15.0", dry_run=False):
     
     # Patterns to match declarations that should get availability annotations
     declaration_patterns = [
+        # struct declarations
         r'^(public\s+struct\s+)',
-        r'^(public\s+extension\s+)',
-        r'^(struct\s+)',
-        r'^(extension\s+)',
         r'^(private\s+struct\s+)',
-        r'^(private\s+extension\s+)',
         r'^(internal\s+struct\s+)',
-        r'^(internal\s+extension\s+)',
+        r'^(struct\s+)',
         r'^(@frozen\s+public\s+struct\s+)',
         r'^(@frozen\s+struct\s+)',
+        
+        # enum declarations
+        r'^(public\s+enum\s+)',
+        r'^(private\s+enum\s+)',
+        r'^(internal\s+enum\s+)',
+        r'^(enum\s+)',
+        r'^(@frozen\s+public\s+enum\s+)',
+        r'^(@frozen\s+enum\s+)',
+        
+        # enum with attributes like @resultBuilder
+        r'^(@\w+\s+public\s+enum\s+)',
+        r'^(@\w+\s+enum\s+)',
+        r'^(@\w+\s+@\w+\s+public\s+enum\s+)',
+        r'^(@\w+\s+@\w+\s+enum\s+)',
+        
+        # class declarations
+        r'^(public\s+class\s+)',
+        r'^(private\s+class\s+)',
+        r'^(internal\s+class\s+)',
+        r'^(class\s+)',
+        r'^(final\s+public\s+class\s+)',
+        r'^(final\s+class\s+)',
+        r'^(@\w+\s+public\s+class\s+)',
+        r'^(@\w+\s+class\s+)',
+        
+        # actor declarations (iOS 15+)
+        r'^(public\s+actor\s+)',
+        r'^(private\s+actor\s+)',
+        r'^(internal\s+actor\s+)',
+        r'^(actor\s+)',
+        
+        # protocol declarations
+        r'^(public\s+protocol\s+)',
+        r'^(private\s+protocol\s+)',
+        r'^(internal\s+protocol\s+)',
+        r'^(protocol\s+)',
+        
+        # extension declarations
+        r'^(public\s+extension\s+)',
+        r'^(private\s+extension\s+)',
+        r'^(internal\s+extension\s+)',
+        r'^(extension\s+)',
     ]
     
     try:

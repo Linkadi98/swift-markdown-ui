@@ -5,6 +5,7 @@ import Foundation
 /// You don't call the methods of the result builder directly. Instead, MarkdownUI annotates the `content` parameter of the
 /// ``Paragraph``, ``Heading``, and ``TextTableColumn`` initializers with the `@InlineContentBuilder` attribute,
 /// implicitly calling this builder for you.
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @resultBuilder public enum InlineContentBuilder {
   public static func buildBlock(_ components: InlineContentProtocol...) -> InlineContent {
     .init(components)

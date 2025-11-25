@@ -1,5 +1,6 @@
 import Foundation
 
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 enum BlockNode: Hashable {
   case blockquote(children: [BlockNode])
   case bulletedList(isTight: Bool, items: [RawListItem])
@@ -47,6 +48,7 @@ struct RawTaskListItem: Hashable {
   let children: [BlockNode]
 }
 
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 enum RawTableColumnAlignment: Character {
   case none = "\0"
   case left = "l"

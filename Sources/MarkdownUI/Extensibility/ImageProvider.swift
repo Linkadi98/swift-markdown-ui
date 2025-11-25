@@ -13,6 +13,7 @@ import SwiftUI
 /// }
 /// .markdownImageProvider(.asset)
 /// ```
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public protocol ImageProvider {
   /// A view that loads and displays an image.
   associatedtype Body: View
