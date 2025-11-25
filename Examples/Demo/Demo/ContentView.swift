@@ -10,49 +10,77 @@ struct ContentView: View {
               .navigationTitle("Headings")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Headings", systemImage: "textformat.size")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Headings", systemImage: "textformat.size")
+            } else {
+              Text("Headings")
+            }
           }
           NavigationLink {
             ListsView()
               .navigationTitle("Lists")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Lists", systemImage: "list.bullet")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Lists", systemImage: "list.bullet")
+            } else {
+              Text("Lists")
+            }
           }
           NavigationLink {
             TextStylesView()
               .navigationTitle("Text Styles")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Text Styles", systemImage: "textformat.abc")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Text Styles", systemImage: "textformat.abc")
+            } else {
+              Text("Text Styles")
+            }
           }
           NavigationLink {
             QuotesView()
               .navigationTitle("Quotes")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Quotes", systemImage: "text.quote")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Quotes", systemImage: "text.quote")
+            } else {
+              Text("Quotes")
+            }
           }
           NavigationLink {
             CodeView()
               .navigationTitle("Code")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Code", systemImage: "curlybraces")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Code", systemImage: "curlybraces")
+            } else {
+              Text("Code")
+            }
           }
           NavigationLink {
             ImagesView()
               .navigationTitle("Images")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Images", systemImage: "photo")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Images", systemImage: "photo")
+            } else {
+              Text("Images")
+            }
           }
           NavigationLink {
             TablesView()
               .navigationTitle("Tables")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Tables", systemImage: "tablecells")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Tables", systemImage: "tablecells")
+            } else {
+              Text("Tables")
+            }
           }
         }
         Section("Extensibility") {
@@ -61,14 +89,22 @@ struct ContentView: View {
               .navigationTitle("Syntax Highlighting")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Syntax Highlighting", systemImage: "circle.grid.cross.left.filled")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Syntax Highlighting", systemImage: "circle.grid.cross.left.filled")
+            } else {
+              Text("Syntax Highlighting")
+            }
           }
           NavigationLink {
             ImageProvidersView()
               .navigationTitle("Image Providers")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Image Providers", systemImage: "powerplug")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Image Providers", systemImage: "powerplug")
+            } else {
+              Text("Image Providers")
+            }
           }
         }
         Section("Other") {
@@ -77,21 +113,33 @@ struct ContentView: View {
               .navigationTitle("Dingus")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Dingus", systemImage: "character.cursor.ibeam")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Dingus", systemImage: "character.cursor.ibeam")
+            } else {
+              Text("Dingus")
+            }
           }
           NavigationLink {
             RepositoryReadmeView()
               .navigationTitle("Repository README")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Repository README", systemImage: "doc.text")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Repository README", systemImage: "doc.text")
+            } else {
+              Text("Repository README")
+            }
           }
           NavigationLink {
             LazyLoadingView()
               .navigationTitle("Lazy Loading")
               .navigationBarTitleDisplayMode(.inline)
           } label: {
-            Label("Lazy Loading", systemImage: "scroll")
+            if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+              Label("Lazy Loading", systemImage: "scroll")
+            } else {
+              Text("Lazy Loading")
+            }
           }
         }
       }

@@ -26,7 +26,7 @@ struct TaskListView: View {
     let blockSeq = BlockSequence(self.items) { _, item in
       TaskListItemView(item: item)
     }
-    if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+    if #available(iOS 14.5, macOS 11.3, tvOS 14.5, watchOS 7.4, *) {
       blockSeq
         .labelStyle(.titleAndIcon)
         .environment(\.listLevel, self.listLevel + 1)
