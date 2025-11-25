@@ -101,27 +101,21 @@ import SwiftUI
 /// ```
 public struct Theme {
   /// The text style.
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   public var text: TextStyle = EmptyTextStyle()
 
   /// The inline code style.
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   public var code: TextStyle = FontFamilyVariant(.monospaced)
 
   /// The emphasis style.
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   public var emphasis: TextStyle = FontStyle(.italic)
 
   /// The strong style.
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   public var strong: TextStyle = FontWeight(.semibold)
 
   /// The strikethrough style.
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   public var strikethrough: TextStyle = StrikethroughStyle(.single)
 
   /// The link style.
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   public var link: TextStyle = EmptyTextStyle()
 
   var headings = Array(
