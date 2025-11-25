@@ -14,10 +14,18 @@ extension BlockStyle where Configuration == TaskListMarkerConfiguration {
   /// or a hollow square if the item is not completed.
   public static var checkmarkSquare: Self {
     BlockStyle { configuration in
-      Image(systemName: configuration.isCompleted ? "checkmark.square.fill" : "square")
-        .symbolRenderingMode(.hierarchical)
-        .imageScale(.small)
-        .relativeFrame(minWidth: .em(1.5), alignment: .trailing)
+      let imageSystemName = configuration.isCompleted ? "checkmark.square.fill" : "square"
+      let image = Image(systemName: imageSystemName)
+      if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+        image
+          .symbolRenderingMode(.hierarchical)
+          .imageScale(.small)
+          .relativeFrame(minWidth: .em(1.5), alignment: .trailing)
+      } else {
+        image
+          .imageScale(.small)
+          .relativeFrame(minWidth: .em(1.5), alignment: .trailing)
+      }
     }
   }
 }

@@ -66,9 +66,13 @@ struct DemoView<Content: View>: View {
         }
       }
 
-      self.content
-        .textSelection(.enabled)
+      let contentView = self.content
         .markdownTheme(self.themeOption.theme)
+      if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+        contentView.textSelection(.enabled)
+      } else {
+        contentView
+      }
         // Some themes may have a custom background color that we need to set as
         // the row's background color.
         .listRowBackground(self.themeOption.theme.textBackgroundColor)

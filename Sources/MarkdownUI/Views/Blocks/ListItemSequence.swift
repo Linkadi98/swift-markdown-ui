@@ -18,8 +18,9 @@ struct ListItemSequence: View {
     self.markerWidth = markerWidth
   }
 
+  @ViewBuilder
   var body: some View {
-    BlockSequence(self.items) { index, item in
+    let blockSeq = BlockSequence(self.items) { index, item in
       ListItemView(
         item: item,
         number: self.start + index,
@@ -27,6 +28,10 @@ struct ListItemSequence: View {
         markerWidth: self.markerWidth
       )
     }
-    .labelStyle(.titleAndIcon)
+    if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+      blockSeq.labelStyle(.titleAndIcon)
+    } else {
+      blockSeq
+    }
   }
 }

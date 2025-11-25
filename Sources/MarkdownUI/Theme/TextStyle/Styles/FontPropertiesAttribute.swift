@@ -16,6 +16,7 @@ extension AttributeScopes {
   }
 }
 
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 extension AttributeDynamicLookup {
   subscript<T: AttributedStringKey>(
     dynamicMember keyPath: KeyPath<AttributeScopes.MarkdownUIAttributes, T>

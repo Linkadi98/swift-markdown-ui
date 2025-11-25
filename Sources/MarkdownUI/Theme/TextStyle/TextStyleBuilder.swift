@@ -43,6 +43,7 @@ import Foundation
     Pair(accumulated, next)
   }
 
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   public enum _Conditional<First: TextStyle, Second: TextStyle>: TextStyle {
     case first(First)
     case second(Second)
@@ -57,6 +58,7 @@ import Foundation
     }
   }
 
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   private struct Pair<S0: TextStyle, S1: TextStyle>: TextStyle {
     let s0: S0
     let s1: S1
@@ -73,6 +75,7 @@ import Foundation
   }
 }
 
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 extension Optional: TextStyle where Wrapped: TextStyle {
   public func _collectAttributes(in attributes: inout AttributeContainer) {
     self?._collectAttributes(in: &attributes)

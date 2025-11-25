@@ -130,11 +130,19 @@ extension Theme {
         .markdownMargin(top: .em(0.25))
     }
     .taskListMarker { configuration in
-      Image(systemName: configuration.isCompleted ? "checkmark.square.fill" : "square")
-        .symbolRenderingMode(.hierarchical)
-        .foregroundStyle(Color.checkbox, Color.checkboxBackground)
-        .imageScale(.small)
-        .relativeFrame(minWidth: .em(1.5), alignment: .trailing)
+      let image = Image(systemName: configuration.isCompleted ? "checkmark.square.fill" : "square")
+      if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+        image
+          .symbolRenderingMode(.hierarchical)
+          .foregroundStyle(Color.checkbox, Color.checkboxBackground)
+          .imageScale(.small)
+          .relativeFrame(minWidth: .em(1.5), alignment: .trailing)
+      } else {
+        image
+          .foregroundColor(Color.checkbox)
+          .imageScale(.small)
+          .relativeFrame(minWidth: .em(1.5), alignment: .trailing)
+      }
     }
     .table { configuration in
       configuration.label

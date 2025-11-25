@@ -21,12 +21,20 @@ struct TaskListView: View {
     )
   }
 
+  @ViewBuilder
   private var label: some View {
-    BlockSequence(self.items) { _, item in
+    let blockSeq = BlockSequence(self.items) { _, item in
       TaskListItemView(item: item)
     }
-    .labelStyle(.titleAndIcon)
-    .environment(\.listLevel, self.listLevel + 1)
-    .environment(\.tightSpacingEnabled, self.isTight)
+    if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+      blockSeq
+        .labelStyle(.titleAndIcon)
+        .environment(\.listLevel, self.listLevel + 1)
+        .environment(\.tightSpacingEnabled, self.isTight)
+    } else {
+      blockSeq
+        .environment(\.listLevel, self.listLevel + 1)
+        .environment(\.tightSpacingEnabled, self.isTight)
+    }
   }
 }

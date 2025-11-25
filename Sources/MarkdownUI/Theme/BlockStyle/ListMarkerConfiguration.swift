@@ -64,9 +64,15 @@ extension BlockStyle where Configuration == ListMarkerConfiguration {
   /// A list marker style that uses decimal numbers beginning with 1.
   public static func decimal(minWidth: RelativeSize, alignment: Alignment = .center) -> Self {
     BlockStyle { configuration in
-      Text("\(configuration.itemNumber).")
-        .monospacedDigit()
-        .relativeFrame(minWidth: minWidth, alignment: alignment)
+      let text = Text("\(configuration.itemNumber).")
+      if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+        text
+          .monospacedDigit()
+          .relativeFrame(minWidth: minWidth, alignment: alignment)
+      } else {
+        text
+          .relativeFrame(minWidth: minWidth, alignment: alignment)
+      }
     }
   }
 

@@ -9,7 +9,11 @@ extension Font {
     case .system(let design):
       font = .system(size: size, design: design)
     case .custom(let name):
-      font = .custom(name, fixedSize: size)
+      if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+        font = .custom(name, fixedSize: size)
+      } else {
+        font = .custom(name, size: size)
+      }
     }
 
     switch fontProperties.familyVariant {
@@ -34,7 +38,9 @@ extension Font {
     case .normal:
       break  // do nothing
     case .monospaced:
-      font = font.monospacedDigit()
+      if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+        font = font.monospacedDigit()
+      }
     }
 
     if fontProperties.weight != .regular {
