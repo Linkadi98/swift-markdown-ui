@@ -75,7 +75,49 @@ private struct TextInlineRenderer {
       text = text.replacingOccurrences(of: "^\\s+", with: "", options: .regularExpression)
     }
 
-    self.defaultRender(.text(text))
+    // Simple check to avoid conflicts with strikethrough - just do basic parsing
+
+    // Custom: lightweight parse for ^superscript^ and ~subscript~
+    // Use different delimiters to avoid conflict: ^...^ for superscript, _{...} for subscript
+    var cursor = text.startIndex
+    func appendNormal(_ s: Substring) {
+      guard !s.isEmpty else { return }
+      self.defaultRender(.text(String(s)))
+    }
+
+    while cursor < text.endIndex {
+      // Look for ^...^ superscript
+      if let caretStart = text[cursor...].firstIndex(of: "^") {
+        let afterCaret = text.index(after: caretStart)
+        if afterCaret < text.endIndex, let caretEnd = text[afterCaret...].firstIndex(of: "^") {
+          appendNormal(text[cursor..<caretStart])
+          let payload = text[afterCaret..<caretEnd]
+          let attributed = AttributedString(String(payload), attributes: self.attributes)
+          let segment = Text(attributed).font(.caption2).baselineOffset(6)
+          self.result = self.result + segment
+          cursor = text.index(after: caretEnd)
+          continue
+        }
+      }
+
+      // Look for _{...} subscript
+      if let underStart = text[cursor...].range(of: "_{") {
+        let afterBrace = underStart.upperBound
+        if let braceEnd = text[afterBrace...].firstIndex(of: "}") {
+          appendNormal(text[cursor..<underStart.lowerBound])
+          let payload = text[afterBrace..<braceEnd]
+          let attributed = AttributedString(String(payload), attributes: self.attributes)
+          let segment = Text(attributed).font(.caption2).baselineOffset(-3)
+          self.result = self.result + segment
+          cursor = text.index(after: braceEnd)
+          continue
+        }
+      }
+
+      // No more patterns found, emit rest
+      break
+    }
+    appendNormal(text[cursor...])
   }
 
   private mutating func renderSoftBreak() {

@@ -68,20 +68,21 @@ struct DemoView<Content: View>: View {
         }
       }
 
-      let contentView = self.content
-        .markdownTheme(self.themeOption.theme)
-      if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
-        contentView.textSelection(.enabled)
-      } else {
-        contentView
+      Group {
+        let base = self.content.markdownTheme(self.themeOption.theme)
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+          base
+            .textSelection(.enabled)
+            .listRowBackground(self.themeOption.theme.textBackgroundColor)
+        } else {
+          base
+            .listRowBackground(self.themeOption.theme.textBackgroundColor)
+        }
       }
-        // Some themes may have a custom background color that we need to set as
-        // the row's background color.
-        .listRowBackground(self.themeOption.theme.textBackgroundColor)
-        // By resetting the state when the theme changes, we avoid mixing the
-        // the previous theme block spacing preferences with the new theme ones,
-        // which can only happen in this particular use case.
-        .id(self.themeOption.name)
+      // By resetting the state when the theme changes, we avoid mixing the
+      // the previous theme block spacing preferences with the new theme ones,
+      // which can only happen in this particular use case.
+      .id(self.themeOption.name)
     }
     .onAppear {
       self.themeOption = self.themeOptions.first ?? .basic

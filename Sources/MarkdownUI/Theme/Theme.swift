@@ -461,7 +461,7 @@ extension Theme {
 }
 
 @available(iOS 15.0, *)
-extension Theme {
+public extension Theme {
   /// The text background color of the theme extracted from the ``Theme/text`` style.
   var textBackgroundColor: Color? {
     if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {

@@ -7,6 +7,7 @@ struct InlineText: View {
   @Environment(\.imageBaseURL) private var imageBaseURL
   @Environment(\.softBreakMode) private var softBreakMode
   @Environment(\.theme) private var theme
+  @Environment(\.markdownTextSelectionEnabled) private var textSelectionEnabled
 
   @State private var inlineImages: [String: Image] = [:]
 
@@ -18,19 +19,38 @@ struct InlineText: View {
 
   var body: some View {
     TextStyleAttributesReader { attributes in
-      self.inlines.renderText(
-        baseURL: self.baseURL,
-        textStyles: .init(
-          code: self.theme.code,
-          emphasis: self.theme.emphasis,
-          strong: self.theme.strong,
-          strikethrough: self.theme.strikethrough,
-          link: self.theme.link
-        ),
-        images: self.inlineImages,
-        softBreakMode: self.softBreakMode,
-        attributes: attributes
-      )
+      if textSelectionEnabled {
+        // Use UITextView for proper character-level text selection
+        SelectableMarkdownText(
+          attributedString: self.inlines.renderAttributedString(
+            baseURL: self.baseURL,
+            textStyles: .init(
+              code: self.theme.code,
+              emphasis: self.theme.emphasis,
+              strong: self.theme.strong,
+              strikethrough: self.theme.strikethrough,
+              link: self.theme.link
+            ),
+            softBreakMode: self.softBreakMode,
+            attributes: attributes
+          )
+        )
+      } else {
+        // Use regular SwiftUI Text for proper markdown rendering
+        self.inlines.renderText(
+          baseURL: self.baseURL,
+          textStyles: .init(
+            code: self.theme.code,
+            emphasis: self.theme.emphasis,
+            strong: self.theme.strong,
+            strikethrough: self.theme.strikethrough,
+            link: self.theme.link
+          ),
+          images: self.inlineImages,
+          softBreakMode: self.softBreakMode,
+          attributes: attributes
+        )
+      }
     }
     .task(id: self.inlines) {
       self.inlineImages = (try? await self.loadInlineImages()) ?? [:]

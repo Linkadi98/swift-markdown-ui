@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8466711E2ED95EB700C17BB4 /* ExpandableMarkdownDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8466711D2ED95EB700C17BB4 /* ExpandableMarkdownDemoView.swift */; };
+		846671222ED9615500C17BB4 /* TextureMarkdownNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846671212ED9615500C17BB4 /* TextureMarkdownNode.swift */; };
 		9902F2B229571D5D003A2DCC /* ImagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9902F2B129571D5D003A2DCC /* ImagesView.swift */; };
 		9902F2B729575183003A2DCC /* ImageProvidersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9902F2B629575183003A2DCC /* ImageProvidersView.swift */; };
 		991E39862950A73500A3012A /* QuotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 991E39852950A73500A3012A /* QuotesView.swift */; };
@@ -32,6 +34,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		8466711D2ED95EB700C17BB4 /* ExpandableMarkdownDemoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpandableMarkdownDemoView.swift; sourceTree = "<group>"; };
+		846671212ED9615500C17BB4 /* TextureMarkdownNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TextureMarkdownNode.swift; path = Demo/TextureMarkdownNode.swift; sourceTree = "<group>"; };
 		9902F2B129571D5D003A2DCC /* ImagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagesView.swift; sourceTree = "<group>"; };
 		9902F2B629575183003A2DCC /* ImageProvidersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageProvidersView.swift; sourceTree = "<group>"; };
 		991E39852950A73500A3012A /* QuotesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuotesView.swift; sourceTree = "<group>"; };
@@ -81,6 +85,7 @@
 		99DE2A12294D9A2B0025E332 = {
 			isa = PBXGroup;
 			children = (
+				846671212ED9615500C17BB4 /* TextureMarkdownNode.swift */,
 				99DE2A2C294D9A670025E332 /* MarkdownUI */,
 				99DE2A1D294D9A2B0025E332 /* Demo */,
 				99DE2A1C294D9A2B0025E332 /* Products */,
@@ -99,6 +104,7 @@
 		99DE2A1D294D9A2B0025E332 /* Demo */ = {
 			isa = PBXGroup;
 			children = (
+				8466711D2ED95EB700C17BB4 /* ExpandableMarkdownDemoView.swift */,
 				99B59C9C2954909000390E9B /* SyntaxHighlighter */,
 				99DE2A20294D9A2B0025E332 /* ContentView.swift */,
 				991E39872950A80C00A3012A /* CodeView.swift */,
@@ -219,10 +225,12 @@
 				991E398A2950B0DF00A3012A /* TablesView.swift in Sources */,
 				99DE2A33294D9E320025E332 /* DemoView.swift in Sources */,
 				991E39862950A73500A3012A /* QuotesView.swift in Sources */,
+				846671222ED9615500C17BB4 /* TextureMarkdownNode.swift in Sources */,
 				991E39882950A80C00A3012A /* CodeView.swift in Sources */,
 				99B59CA229549AB600390E9B /* CodeSyntaxHighlightView.swift in Sources */,
 				99B59CA02954990B00390E9B /* SplashCodeSyntaxHighlighter.swift in Sources */,
 				99DE2A3B294EE3C80025E332 /* DingusView.swift in Sources */,
+				8466711E2ED95EB700C17BB4 /* ExpandableMarkdownDemoView.swift in Sources */,
 				99DE2A41294F8ED70025E332 /* TextStylesView.swift in Sources */,
 				99DE2A3F294F33030025E332 /* ListsView.swift in Sources */,
 				99B59C9E295490B300390E9B /* TextOutputFormat.swift in Sources */,

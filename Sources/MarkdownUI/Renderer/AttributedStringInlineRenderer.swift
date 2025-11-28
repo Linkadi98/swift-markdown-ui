@@ -20,6 +20,25 @@ extension InlineNode {
 }
 
 @available(iOS 15.0, *)
+extension Sequence where Element == InlineNode {
+  func renderAttributedString(
+    baseURL: URL?,
+    textStyles: InlineTextStyles,
+    softBreakMode: SoftBreak.Mode,
+    attributes: AttributeContainer
+  ) -> AttributedString {
+    var renderer = AttributedStringInlineRenderer(
+      baseURL: baseURL,
+      textStyles: textStyles,
+      softBreakMode: softBreakMode,
+      attributes: attributes
+    )
+    renderer.render(self)
+    return renderer.result.resolvingFonts()
+  }
+}
+
+@available(iOS 15.0, *)
 private struct AttributedStringInlineRenderer {
   var result = AttributedString()
 
@@ -39,6 +58,12 @@ private struct AttributedStringInlineRenderer {
     self.textStyles = textStyles
     self.softBreakMode = softBreakMode
     self.attributes = attributes
+  }
+
+  mutating func render<S: Sequence>(_ inlines: S) where S.Element == InlineNode {
+    for inline in inlines {
+      self.render(inline)
+    }
   }
 
   mutating func render(_ inline: InlineNode) {
@@ -74,7 +99,55 @@ private struct AttributedStringInlineRenderer {
       text = text.replacingOccurrences(of: "^\\s+", with: "", options: .regularExpression)
     }
 
-    self.result += .init(text, attributes: self.attributes)
+    // Simple check to avoid conflicts with strikethrough - just do basic parsing
+
+    // Custom: lightweight parse for ^superscript^ and _{subscript}
+    // Use different delimiters to avoid conflict: ^...^ for superscript, _{...} for subscript
+    var cursor = text.startIndex
+    func appendNormal(_ s: Substring) {
+      guard !s.isEmpty else { return }
+      self.result += .init(String(s), attributes: self.attributes)
+    }
+
+    while cursor < text.endIndex {
+      // Look for ^...^ superscript
+      if let caretStart = text[cursor...].firstIndex(of: "^") {
+        let afterCaret = text.index(after: caretStart)
+        if afterCaret < text.endIndex, let caretEnd = text[afterCaret...].firstIndex(of: "^") {
+          appendNormal(text[cursor..<caretStart])
+          let payload = text[afterCaret..<caretEnd]
+          var attrs = self.attributes
+          attrs.font = .caption2
+          if #available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *) {
+            attrs[AttributeScopes.SwiftUIAttributes.BaselineOffsetAttribute.self] = 6
+          }
+          self.result += .init(String(payload), attributes: attrs)
+          cursor = text.index(after: caretEnd)
+          continue
+        }
+      }
+
+      // Look for _{...} subscript
+      if let underStart = text[cursor...].range(of: "_{") {
+        let afterBrace = underStart.upperBound
+        if let braceEnd = text[afterBrace...].firstIndex(of: "}") {
+          appendNormal(text[cursor..<underStart.lowerBound])
+          let payload = text[afterBrace..<braceEnd]
+          var attrs = self.attributes
+          attrs.font = .caption2
+          if #available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *) {
+            attrs[AttributeScopes.SwiftUIAttributes.BaselineOffsetAttribute.self] = -3
+          }
+          self.result += .init(String(payload), attributes: attrs)
+          cursor = text.index(after: braceEnd)
+          continue
+        }
+      }
+
+      // No more patterns found, emit rest
+      break
+    }
+    appendNormal(text[cursor...])
   }
 
   private mutating func renderSoftBreak() {
