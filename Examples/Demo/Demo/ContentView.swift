@@ -91,7 +91,8 @@ struct ContentView: View {
                             .navigationBarTitleDisplayMode(.inline)
                     } label: {
                         if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
-                            Label("Syntax Highlighting", systemImage: "circle.grid.cross.left.filled")
+                            Label(
+                                "Syntax Highlighting", systemImage: "circle.grid.cross.left.filled")
                         } else {
                             Text("Syntax Highlighting")
                         }
@@ -109,6 +110,28 @@ struct ContentView: View {
                     }
                 }
                 Section("Other") {
+                    NavigationLink {
+                        FacebookStyleDemoView()
+                            .navigationTitle("Facebook Style Posts")
+                            .navigationBarTitleDisplayMode(.inline)
+                    } label: {
+                        if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+                            Label("Facebook Style Posts", systemImage: "rectangle.3.group")
+                        } else {
+                            Text("Facebook Style Posts")
+                        }
+                    }
+                    NavigationLink {
+                        TextureMarkdownDemoView()
+                            .navigationTitle("Texture Markdown")
+                            .navigationBarTitleDisplayMode(.inline)
+                    } label: {
+                        if #available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *) {
+                            Label("Texture Markdown", systemImage: "doc.text")
+                        } else {
+                            Text("Texture Markdown")
+                        }
+                    }
                     NavigationLink {
                         ExpandableMarkdownDemoView()
                             .navigationTitle("Expandable Markdown")

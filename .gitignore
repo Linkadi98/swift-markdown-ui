@@ -90,3 +90,6 @@ fastlane/test_output
 iOSInjectionProject/
 
 .DS_Store
+
+Examples/Demo/.spm.pods
+Examples/Demo/Pods

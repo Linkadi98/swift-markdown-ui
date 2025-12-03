@@ -289,3 +289,38 @@ Finally, add `import MarkdownUI` to your source code.
 1. Enter `https://github.com/gonzalezreal/swift-markdown-ui` into the
    *Search or Enter Package URL* search field
 1. Link **MarkdownUI** to your application target
+
+### Using CocoaPods (via cocoapods-spm)
+
+If you prefer CocoaPods, you can integrate MarkdownUI using the `cocoapods-spm` plugin to bridge its Swift Package dependencies.
+
+1. Install the plugin:
+
+```
+gem install cocoapods-spm
+```
+
+2. Add MarkdownUI to your `Podfile` and bridge SPM dependencies:
+
+```
+plugin 'cocoapods-spm'
+
+target 'YourAppTarget' do
+  use_frameworks!
+
+  pod 'MarkdownUI', :git => 'https://github.com/gapoworkios/swift-markdown-ui.git', :tag => '0.1.0'
+
+  # SPM dependencies required by MarkdownUI
+  spm 'swift-cmark', :product => 'cmark-gfm', :version => '0.4.0'
+  spm 'swift-cmark', :product => 'cmark-gfm-extensions', :version => '0.4.0'
+  spm 'NetworkImage', :url => 'https://github.com/gapoworkios/NetworkImage', :branch => 'main'
+end
+```
+
+3. Install pods:
+
+```
+pod install
+```
+
+Note: The cocoapods-spm plugin resolves SwiftPM packages at install time. Refer to the plugin documentation for advanced options.
