@@ -7,16 +7,16 @@ public struct ExpandableMarkdown: View {
     @Environment(\.softBreakMode) public var softBreakMode
     @Environment(\.baseURL) public var baseURL
     @Environment(\.imageBaseURL) public var imageBaseURL
-    
+
     private let content: MarkdownContent
     private let lineLimit: Int
     private let seeMoreText: String
     private let seeLessText: String
     private let onExpandChange: ((Double) -> Void)?
-    
+
     @State public var expanded = false
     @State public var collapsedHeight: CGFloat = 0
-    
+
     public init(
         _ content: MarkdownContent,
         lineLimit: Int = 5,
@@ -30,7 +30,7 @@ public struct ExpandableMarkdown: View {
         self.seeLessText = seeLessText
         self.onExpandChange = onExpandChange
     }
-    
+
     public init(
         _ markdown: String,
         lineLimit: Int = 5,
@@ -46,12 +46,12 @@ public struct ExpandableMarkdown: View {
             onExpandChange: onExpandChange
         )
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ExpandableBlockSequence(self.blocks)
                 .environment(\.markdownMaxLines, expanded ? nil : self.lineLimit)
-            
+
             Button(action: {
                 expanded.toggle()
             }) {
@@ -67,7 +67,7 @@ public struct ExpandableMarkdown: View {
         .animation(nil, value: expanded)
         .background(heightReader)
     }
-    
+
     private var heightReader: some View {
         GeometryReader { proxy in
             let h = proxy.size.height
@@ -77,7 +77,7 @@ public struct ExpandableMarkdown: View {
                 }
         }
     }
-    
+
     private var blocks: [BlockNode] {
         self.content.blocks.filterImagesMatching(colorScheme: self.colorScheme)
     }
