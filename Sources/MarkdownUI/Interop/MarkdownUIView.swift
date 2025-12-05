@@ -20,32 +20,67 @@ public final class MarkdownUIView: UIView {
     private var onHeightChange: ((CGFloat) -> Void)? = nil
     private var preprocessor: MarkdownTextPreProcessor?
     private var markdownUrlHandler: MarkdownUrlHandler?
+    private var isExpandedBinding: Binding<Bool>?
+    
+    // Store config for updates
+    private var currentMarkdown: String = ""
+    private var lineLimit: Int?
+    private var theme: Theme = .basic
     
     public init(
         markdown: String,
         lineLimit: Int? = nil,
         theme: Theme = .basic,
+        isExpanded: Binding<Bool>? = nil,
         onHeightChange: ((CGFloat) -> Void)? = nil,
         mardownTextPreprocessor: MarkdownTextPreProcessor? = nil,
         markdownUrlHandler: MarkdownUrlHandler? = nil
     ) {
         super.init(frame: .zero)
         self.backgroundColor = .clear
-        self.preprocessor =       mardownTextPreprocessor
+        self.preprocessor = mardownTextPreprocessor
         self.markdownUrlHandler = markdownUrlHandler
+        self.isExpandedBinding = isExpanded
+        self.currentMarkdown = markdown
+        self.lineLimit = lineLimit
+        self.theme = theme
+        self.onHeightChange = onHeightChange
         
+        let view = self.buildView(markdown: markdown)
+        self.hosting = UIHostingController(rootView: view)
+        self.hosting.view.backgroundColor = .clear
+        self.embed(hosting.view)
+    }
+    
+    /// Updates the markdown text and rebuilds the view
+    public func updateMarkdown(_ markdown: String) {
+        self.currentMarkdown = markdown
+        let view = self.buildView(markdown: markdown)
+        self.hosting.rootView = view
+        
+        // Trigger layout update
+        self.hosting.view.setNeedsLayout()
+        self.hosting.view.layoutIfNeeded()
+        
+        let width = self.bounds.width > 0 ? self.bounds.width : UIScreen.main.bounds.width
+        let h = sizeThatFitsWidth(width).height
+        if h > 0 { updateHeight(h) }
+    }
+    
+    private func buildView(markdown: String) -> AnyView {
         let preprocessedMarkdown: String
-        if let preprocessor =       mardownTextPreprocessor {
+        if let preprocessor = self.preprocessor {
             preprocessedMarkdown = preprocessor.preprocess(text: markdown)
         } else {
             preprocessedMarkdown = markdown
         }
         
         let view: AnyView
-        if let lineLimit {
+        if let lineLimit = self.lineLimit {
             view = AnyView(
                 ExpandableMarkdown(
                     preprocessedMarkdown, lineLimit: lineLimit,
+                    isExpanded: isExpandedBinding,
                     onExpandChange: { [weak self] newHeight in
                         guard let self else { return }
                         self.hosting.view.layoutIfNeeded()
@@ -56,21 +91,26 @@ public final class MarkdownUIView: UIView {
                 .environment(
                     \.openURL,
                      OpenURLAction { url in
-                         if let handler = markdownUrlHandler {
+                         if let handler = self.markdownUrlHandler {
                              return handler.onReceive(url: url)
                          }
-                         
                          return .discarded
                      }
                 )
             )
         } else {
-            view = AnyView(Markdown(markdown).markdownTheme(theme))
+            view = AnyView(Markdown(preprocessedMarkdown).markdownTheme(theme).markdownTheme(theme)
+                .environment(
+                    \.openURL,
+                     OpenURLAction { url in
+                         if let handler = self.markdownUrlHandler {
+                             return handler.onReceive(url: url)
+                         }
+                         return .discarded
+                     }
+                ))
         }
-        self.hosting = UIHostingController(rootView: view)
-        self.hosting.view.backgroundColor = .clear
-        self.onHeightChange = onHeightChange
-        self.embed(hosting.view)
+        return view
     }
     
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }

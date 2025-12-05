@@ -13,22 +13,46 @@ public struct ExpandableMarkdown: View {
     private let seeMoreText: String
     private let seeLessText: String
     private let onExpandChange: ((Double) -> Void)?
+    private let markdownBinding: Binding<String>?
 
-    @State public var expanded = false
+    @State private var internalExpanded = false
+    private var externalExpanded: Binding<Bool>?
+    
     @State public var collapsedHeight: CGFloat = 0
+    
+    private var expanded: Bool {
+        get { externalExpanded?.wrappedValue ?? internalExpanded }
+        nonmutating set {
+            if let binding = externalExpanded {
+                binding.wrappedValue = newValue
+            } else {
+                internalExpanded = newValue
+            }
+        }
+    }
+    
+    private var currentContent: MarkdownContent {
+        if let binding = markdownBinding {
+            return MarkdownContent(binding.wrappedValue)
+        }
+        return content
+    }
 
     public init(
         _ content: MarkdownContent,
         lineLimit: Int = 5,
         seeMoreText: String = "...See more",
         seeLessText: String = "See less",
+        isExpanded: Binding<Bool>? = nil,
         onExpandChange: ((Double) -> Void)? = nil
     ) {
         self.content = content
         self.lineLimit = max(1, lineLimit)
         self.seeMoreText = seeMoreText
         self.seeLessText = seeLessText
+        self.externalExpanded = isExpanded
         self.onExpandChange = onExpandChange
+        self.markdownBinding = nil
     }
 
     public init(
@@ -36,6 +60,7 @@ public struct ExpandableMarkdown: View {
         lineLimit: Int = 5,
         seeMoreText: String = "...See more",
         seeLessText: String = "See less",
+        isExpanded: Binding<Bool>? = nil,
         onExpandChange: ((Double) -> Void)? = nil
     ) {
         self.init(
@@ -43,8 +68,27 @@ public struct ExpandableMarkdown: View {
             lineLimit: lineLimit,
             seeMoreText: seeMoreText,
             seeLessText: seeLessText,
+            isExpanded: isExpanded,
             onExpandChange: onExpandChange
         )
+    }
+    
+    /// Initialize with a binding to markdown text for dynamic updates
+    public init(
+        markdown: Binding<String>,
+        lineLimit: Int = 5,
+        seeMoreText: String = "...See more",
+        seeLessText: String = "See less",
+        isExpanded: Binding<Bool>? = nil,
+        onExpandChange: ((Double) -> Void)? = nil
+    ) {
+        self.content = MarkdownContent(markdown.wrappedValue)
+        self.lineLimit = max(1, lineLimit)
+        self.seeMoreText = seeMoreText
+        self.seeLessText = seeLessText
+        self.externalExpanded = isExpanded
+        self.onExpandChange = onExpandChange
+        self.markdownBinding = markdown
     }
 
     public var body: some View {
@@ -66,6 +110,7 @@ public struct ExpandableMarkdown: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .animation(nil, value: expanded)
         .background(heightReader)
+        .id(markdownBinding?.wrappedValue ?? "") // Force refresh when binding changes
     }
 
     private var heightReader: some View {
@@ -79,6 +124,6 @@ public struct ExpandableMarkdown: View {
     }
 
     private var blocks: [BlockNode] {
-        self.content.blocks.filterImagesMatching(colorScheme: self.colorScheme)
+        self.currentContent.blocks.filterImagesMatching(colorScheme: self.colorScheme)
     }
 }
