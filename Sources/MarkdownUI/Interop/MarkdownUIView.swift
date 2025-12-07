@@ -143,13 +143,9 @@ public final class MarkdownUIView: UIView {
         guard height != currentHeight else { return }
         currentHeight = height
         
-        self.invalidateIntrinsicContentSize()
         self.setNeedsLayout()
         
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            self.onHeightChange?(self.currentHeight)
-        }
+        self.onHeightChange?(self.currentHeight)
     }
     
     private func getHostingViewPrefersize() -> CGSize {
