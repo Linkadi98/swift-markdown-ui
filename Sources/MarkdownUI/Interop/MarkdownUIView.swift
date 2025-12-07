@@ -52,6 +52,23 @@ public final class MarkdownUIView: UIView {
         self.embed(hosting.view)
     }
     
+    // MARK: - Expand / Collapse controls for UIKit
+    public func setExpanded(_ expanded: Bool) {
+        guard let binding = isExpandedBinding else { return }
+        binding.wrappedValue = expanded
+        // Rebuild to ensure SwiftUI picks up latest state immediately
+        self.hosting.rootView = self.buildView(markdown: currentMarkdown)
+        self.hosting.view.setNeedsLayout()
+        self.hosting.view.layoutIfNeeded()
+        let width = self.bounds.width > 0 ? self.bounds.width : UIScreen.main.bounds.width
+        let h = sizeThatFitsWidth(width).height
+        if h > 0 { updateHeight(h) }
+    }
+
+    public func expand() { setExpanded(true) }
+    public func collapse() { setExpanded(false) }
+    public func toggle() { setExpanded(!(isExpandedBinding?.wrappedValue ?? false)) }
+
     /// Updates the markdown text and rebuilds the view
     public func updateMarkdown(_ markdown: String) {
         self.currentMarkdown = markdown

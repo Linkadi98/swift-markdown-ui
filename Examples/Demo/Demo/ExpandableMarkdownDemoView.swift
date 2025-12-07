@@ -3,6 +3,7 @@ import SwiftUI
 
 @available(iOS 15.0, *)
 struct ExpandableMarkdownDemoView: View {
+  @State private var isExpanded: Bool = false
   private let sample = """
     # Expandable Demo
 
@@ -58,7 +59,15 @@ struct ExpandableMarkdownDemoView: View {
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 16) {
-        ExpandableMarkdown(sample, lineLimit: 5)
+        HStack(spacing: 12) {
+          Button("Expand") { isExpanded = true }
+          Button("Collapse") { isExpanded = false }
+          Text(isExpanded ? "Expanded" : "Collapsed")
+            .font(.footnote)
+            .foregroundColor(.secondary)
+        }
+
+        ExpandableMarkdown(sample, lineLimit: 5, isExpanded: $isExpanded)
           .markdownTheme(.gitHub)
       }
       .padding()
