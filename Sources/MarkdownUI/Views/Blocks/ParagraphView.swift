@@ -5,6 +5,9 @@ struct ParagraphView: View {
   @Environment(\.theme.paragraph) private var paragraph
   @Environment(\.markdownRemainingLines) private var remainingLines
   @Environment(\.markdownBlockIndex) private var blockIndex
+  @State private var totalHeight: CGFloat = 0
+  @State private var singleLineHeight: CGFloat = 0
+  @State private var twoLineHeight: CGFloat = 0
 
   private let content: [InlineNode]
 
@@ -44,18 +47,52 @@ struct ParagraphView: View {
   // Label wrapped to measure used lines and respect remaining line budget
   @ViewBuilder private var measuredLabel: some View {
     TextStyleAttributesReader { _ in
-      // Render inline text and apply lineLimit from environment
-      self.label
-        .lineLimit(self.remainingLines >= 1000 ? nil : self.remainingLines)
-        .background(
-          GeometryReader { proxy in
-            // Report total lines for this block (unbounded by budget) keyed by block index
+      ZStack(alignment: .topLeading) {
+        // Actual render honoring the budget
+        self.label
+          .lineLimit(self.remainingLines >= 1000 ? nil : self.remainingLines)
+          .background(
+            GeometryReader { proxy in
+              Color.clear.onAppear { totalHeight = proxy.size.height }
+                .onChange(of: proxy.size.height) { totalHeight = $0 }
+            }
+          )
+        // Hidden one-line probe to measure single-line height under same style
+        self.label
+          .lineLimit(1)
+          .opacity(0.001)
+          .accessibilityHidden(true)
+          .background(
+            GeometryReader { proxy in
+              Color.clear.onAppear { singleLineHeight = max(1, proxy.size.height) }
+                .onChange(of: proxy.size.height) { singleLineHeight = max(1, $0) }
+            }
+          )
+
+        // Hidden two-line probe to compute incremental per-line height
+        self.label
+          .lineLimit(2)
+          .opacity(0.001)
+          .accessibilityHidden(true)
+          .background(
+            GeometryReader { proxy in
+              Color.clear.onAppear { twoLineHeight = max(1, proxy.size.height) }
+                .onChange(of: proxy.size.height) { twoLineHeight = max(1, $0) }
+            }
+          )
+      }
+      .background(
+        Group {
+          if self.remainingLines >= 1000 {
             Color.clear.preference(
               key: BlockLinesPreferenceKey.self,
-              value: [self.blockIndex: self.estimateUsedLines(proxy: proxy)]
+              value: [self.blockIndex: self.computeUsedLines()]
             )
+          } else {
+            Color.clear.preference(key: BlockLinesPreferenceKey.self, value: [:])
           }
-        )
+        }
+      )
     }
   }
 
@@ -69,5 +106,19 @@ struct ParagraphView: View {
     let h = proxy.size.height
     guard lh > 0 else { return 0 }
     return max(1, Int(ceil(h / lh)))
+  }
+
+  private func computeUsedLines() -> Int {
+    let h = totalHeight
+    let h1 = singleLineHeight
+    let h2 = twoLineHeight
+    guard h > 0, h1 > 0 else { return 1 }
+    if h2 > h1 {
+      let perLine = max(1, h2 - h1)
+      let extra = max(0, h - h1)
+      let lines = 1 + Int(ceil(extra / perLine))
+      return max(1, lines)
+    }
+    return max(1, Int(ceil(h / h1)))
   }
 }

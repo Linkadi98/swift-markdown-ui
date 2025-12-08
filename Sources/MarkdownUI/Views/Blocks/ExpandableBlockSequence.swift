@@ -12,32 +12,28 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
   }
 
   func applyMeasuredLines(_ values: [Int: Int]) {
-    // Ignore if identical
+    // Replace with the latest aggregated snapshot (BlockLinesPreferenceKey already sums by index)
     if values == blockLines { return }
-
-    print("📊 applyMeasuredLines - incoming: \(values)")
-
-    // Merge, prefer larger (natural counts shouldn't shrink)
-    var merged = blockLines
-    for (k, v) in values {
-      if let old = merged[k] {
-        merged[k] = max(old, v)
-      } else {
-        merged[k] = v
-      }
-    }
-    blockLines = merged
-
-    print("📊 applyMeasuredLines - merged: \(merged), ready: \(isMeasuredReady)")
-
-    if !isMeasuredReady && merged.count >= totalBlocks {
+    print("📊 applyMeasuredLines - snapshot: \(values)")
+    blockLines = values
+    if !isMeasuredReady && values.count >= totalBlocks {
       isMeasuredReady = true
       print("✅ Measurement ready! Total blocks: \(totalBlocks)")
     }
   }
 
   // Compute visible block indices along with their applicable line limits
-  func visibleBlocks(totalBlockCount: Int, maxLines: Int?, isExpanded: Bool) -> [(
+  // Reserve at least `reserveForFirstContent` lines for the first content block (non-heading/non-rule)
+  func visibleBlocks(
+    totalBlockCount: Int,
+    maxLines: Int?,
+    isExpanded: Bool,
+    isContentBlock: (_ index: Int) -> Bool,
+    isHeadingBlock: (_ index: Int) -> Bool = { _ in false },
+    isZeroCostBlock: (_ index: Int) -> Bool = { _ in false },
+    reserveForFirstContent: Int = 0,
+    headingCollapsedMaxLines: Int? = nil
+  ) -> [(
     index: Int, limit: Int?
   )] {
     print(
@@ -54,38 +50,76 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
     }
     guard let maxLines else { return [] }
     var remaining = maxLines
+    var firstContentShown = false
     var result: [(index: Int, limit: Int?)] = []
     for idx in 0..<totalBlockCount {
       var limit: Int?
-      if let measured = blockLines[idx] {
-        // We have a measured line count for this block
-        if measured <= remaining {
-          // Show entire block (no per-block limit), decrement remaining by measured
-          limit = nil
-          remaining -= measured
-        } else if remaining > 0 {
-          // Only part of this block fits; apply per-block limit equal to remaining
-          limit = remaining
-          remaining = 0
+      let contentBlock = isContentBlock(idx)
+      if let measuredRaw = blockLines[idx] {
+        // Optionally clamp heading contribution to a configurable max in collapsed mode
+        let measured: Int
+        if isHeadingBlock(idx), let cap = headingCollapsedMaxLines {
+          measured = min(measuredRaw, cap)
         } else {
-          // No lines remaining; hide this block
-          limit = 0
+          measured = measuredRaw
+        }
+        // We have a measured line count for this block
+        if !firstContentShown && !contentBlock {
+          // Heading/rule before first content: reserve some lines for first content
+          let reserve = max(0, reserveForFirstContent)
+          let usable = max(0, remaining - reserve)
+          if measured <= usable {
+            limit = nil
+            remaining -= measured
+          } else if usable > 0 {
+            limit = usable
+            remaining = reserve
+          } else {
+            limit = 0
+          }
+        } else {
+          if measured <= remaining {
+            limit = nil
+            remaining -= measured
+          } else if remaining > 0 {
+            limit = remaining
+            remaining = 0
+          } else {
+            limit = 0
+          }
         }
       } else {
         // Fallback assumption until measurement is ready: assume 1 line per block
-        let assumedLines = 1
-        if assumedLines <= remaining {
-          limit = nil
-          remaining -= assumedLines
-        } else if remaining > 0 {
-          limit = remaining
-          remaining = 0
+        let assumed: Int = isZeroCostBlock(idx) ? 0 : 1
+        if !firstContentShown && !contentBlock {
+          let reserve = max(0, reserveForFirstContent)
+          let usable = max(0, remaining - reserve)
+          if assumed <= usable {
+            limit = nil
+            remaining -= assumed
+          } else if usable > 0 {
+            limit = usable
+            remaining = reserve
+          } else {
+            limit = 0
+          }
         } else {
-          limit = 0
+          if assumed <= remaining {
+            limit = nil
+            remaining -= assumed
+          } else if remaining > 0 {
+            limit = remaining
+            remaining = 0
+          } else {
+            limit = 0
+          }
         }
       }
       if limit != 0 {
         result.append((idx, limit))
+      }
+      if contentBlock && (limit == nil || (limit ?? 0) > 0) {
+        firstContentShown = true
       }
       if remaining <= 0 {
         break
@@ -114,14 +148,33 @@ struct ExpandableBlockSequence: View {
   }
 
   var body: some View {
-    // Visible content: collapsed or expanded using measured/cached line counts
-    VStack(alignment: .leading, spacing: 8) {
-      let visibleBlocks = viewModel.visibleBlocks(
-        totalBlockCount: blocks.count,
-        maxLines: maxLines,
-        isExpanded: isExpanded
-      )
+    // Decide which blocks are "content" (consume budget) vs structural
+    let isContentBlock: (Int) -> Bool = { i in
+      switch blocks[i].value {
+      case .heading, .thematicBreak: return false
+      default: return true
+      }
+    }
 
+    // Compute visible blocks before building the view tree
+    let visibleBlocks = viewModel.visibleBlocks(
+      totalBlockCount: blocks.count,
+      maxLines: maxLines,
+      isExpanded: isExpanded,
+      isContentBlock: isContentBlock,
+      isHeadingBlock: { i in
+        if case .heading = blocks[i].value { return true } else { return false }
+      },
+      isZeroCostBlock: { i in
+        if case .thematicBreak = blocks[i].value { return true }
+        return false
+      },
+      reserveForFirstContent: 0,
+      headingCollapsedMaxLines: nil
+    )
+
+    // Visible content: collapsed or expanded using measured/cached line counts
+    return VStack(alignment: .leading, spacing: 8) {
       ForEach(visibleBlocks, id: \.index) { block in
         let element = blocks[block.index]
         let remainingLines = block.limit ?? Int.max

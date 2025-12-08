@@ -16,6 +16,7 @@ public struct ExpandableMarkdown: View {
     private let onTruncationChanged: ((Bool) -> Void)?
     private let showsExpansionButton: Bool
     private let expansionButtonEnabled: Bool
+
     // If true, the expansion button is only shown when the view is
     // collapsed and the content is truncated.
     private let showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool

@@ -4,7 +4,7 @@ import SwiftUI
 struct BlockLinesPreferenceKey: PreferenceKey {
   static var defaultValue: [Int: Int] = [:]
   static func reduce(value: inout [Int: Int], nextValue: () -> [Int: Int]) {
-    // Merge, preferring latest measurements for an index
-    value.merge(nextValue(), uniquingKeysWith: { _, new in new })
+    // Sum line counts per block index so composite blocks aggregate children
+    value.merge(nextValue(), uniquingKeysWith: { old, new in old + new })
   }
 }
