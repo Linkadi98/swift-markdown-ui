@@ -12,10 +12,13 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
   }
 
   func applyMeasuredLines(_ values: [Int: Int]) {
+    // Ignore empty snapshots to avoid oscillation between [:] and measured values
+    guard !values.isEmpty else { return }
     // Replace with the latest aggregated snapshot (BlockLinesPreferenceKey already sums by index)
     if values == blockLines { return }
     print("📊 applyMeasuredLines - snapshot: \(values)")
     blockLines = values
+    // Mark ready only when we have measurements for all indices present in the sequence
     if !isMeasuredReady && values.count >= totalBlocks {
       isMeasuredReady = true
       print("✅ Measurement ready! Total blocks: \(totalBlocks)")
