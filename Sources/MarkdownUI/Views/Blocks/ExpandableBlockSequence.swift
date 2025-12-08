@@ -18,10 +18,10 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
     if values == blockLines { return }
     print("📊 applyMeasuredLines - snapshot: \(values)")
     blockLines = values
-    // Mark ready only when we have measurements for all indices present in the sequence
-    if !isMeasuredReady && values.count >= totalBlocks {
+    // Mark ready as soon as we have any measurements; continue to refine as more arrive
+    if !isMeasuredReady && values.count > 0 {
       isMeasuredReady = true
-      print("✅ Measurement ready! Total blocks: \(totalBlocks)")
+      print("✅ Measurement started. Received \(values.count) of \(totalBlocks) block measurements")
     }
   }
 
