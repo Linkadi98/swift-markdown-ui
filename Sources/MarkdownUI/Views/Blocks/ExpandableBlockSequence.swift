@@ -16,12 +16,12 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
     guard !values.isEmpty else { return }
     // Replace with the latest aggregated snapshot (BlockLinesPreferenceKey already sums by index)
     if values == blockLines { return }
-    print("📊 applyMeasuredLines - snapshot: \(values)")
+    mdDbg("📊 applyMeasuredLines - snapshot: \(values)")
     blockLines = values
     // Mark ready as soon as we have any measurements; continue to refine as more arrive
     if !isMeasuredReady && values.count > 0 {
       isMeasuredReady = true
-      print("✅ Measurement started. Received \(values.count) of \(totalBlocks) block measurements")
+      mdDbg("✅ Measurement started. Received \(values.count) of \(totalBlocks) block measurements")
     }
   }
 
@@ -39,16 +39,14 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
   ) -> [(
     index: Int, limit: Int?
   )] {
-    print(
-      "🔍 visibleBlocks - totalBlockCount: \(totalBlockCount), maxLines: \(String(describing: maxLines)), isExpanded: \(isExpanded)"
-    )
+    mdDbg("🔍 visibleBlocks - totalBlockCount: \(totalBlockCount), maxLines: \(String(describing: maxLines)), isExpanded: \(isExpanded)")
 
     if isExpanded || maxLines == nil {
       let result: [(index: Int, limit: Int?)] = (0..<totalBlockCount).map {
         (idx) -> (index: Int, limit: Int?) in
         (index: idx, limit: nil)
       }
-      print("🔍 visibleBlocks - returning all: \(result.map { $0.index })")
+      mdDbg("🔍 visibleBlocks - returning all: \(result.map { $0.index })")
       return result
     }
     guard let maxLines else { return [] }
@@ -128,7 +126,7 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
         break
       }
     }
-    print("🔍 visibleBlocks - result: \(result.map { $0.index })")
+    mdDbg("🔍 visibleBlocks - result: \(result.map { $0.index })")
     return result
   }
 }
@@ -147,7 +145,7 @@ struct ExpandableBlockSequence: View {
     self.blocks = indexed
     _viewModel = StateObject(
       wrappedValue: ExpandableBlockSequenceViewModel(totalBlocks: indexed.count))
-    print("🎬 ExpandableBlockSequence init - totalBlocks: \(indexed.count)")
+    mdDbg("🎬 ExpandableBlockSequence init - totalBlocks: \(indexed.count)")
   }
 
   var body: some View {

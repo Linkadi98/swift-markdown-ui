@@ -97,13 +97,23 @@ struct CodeBlockView: View {
     let h = totalHeight
     let h1 = singleLineHeight
     let h2 = twoLineHeight
-    guard h > 0, h1 > 0 else { return 1 }
-    if h2 > h1 {
+    guard h > 0 else { return 1 }
+    if h2 > h1, h1 >= 8 {
       let perLine = max(1, h2 - h1)
       let extra = max(0, h - h1)
       let lines = 1 + Int(ceil(extra / perLine))
       return max(1, lines)
     }
-    return max(1, Int(ceil(h / h1)))
+    if h1 >= 8 {
+      return max(1, Int(ceil(h / h1)))
+    }
+    // Final fallback: monospaced/body approximation
+    #if canImport(UIKit)
+      let lh = UIFont.preferredFont(forTextStyle: .body).lineHeight
+      guard lh > 0 else { return 1 }
+      return max(1, Int(ceil(h / lh)))
+    #else
+      return max(1, Int(ceil(h / 20)))
+    #endif
   }
 }

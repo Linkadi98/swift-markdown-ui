@@ -113,15 +113,34 @@ struct HeadingView: View {
     let h = totalHeight
     let h1 = singleLineHeight
     let h2 = twoLineHeight
-    guard h > 0, h1 > 0 else { return 1 }
+    guard h > 0 else { return 1 }
     // If we have a reliable two-line probe, use incremental height to cancel paddings
-    if h2 > h1 {
+    if h2 > h1, h1 >= 8 {
       let perLine = max(1, h2 - h1)
       let extra = max(0, h - h1)
       let lines = 1 + Int(ceil(extra / perLine))
       return max(1, lines)
     }
-    // Fallback to ratio by single line height
-    return max(1, Int(ceil(h / h1)))
+    // Fallback to ratio by single line height when it's reasonable
+    if h1 >= 8 {
+      return max(1, Int(ceil(h / h1)))
+    }
+    // Final fallback: estimate using UIFont metrics for the heading level
+    #if canImport(UIKit)
+      let textStyle: UIFont.TextStyle
+      switch level {
+      case 1: textStyle = .largeTitle
+      case 2: textStyle = .title1
+      case 3: textStyle = .title2
+      case 4: textStyle = .title3
+      case 5: textStyle = .headline
+      default: textStyle = .subheadline
+      }
+      let lh = UIFont.preferredFont(forTextStyle: textStyle).lineHeight
+      guard lh > 0 else { return 1 }
+      return max(1, Int(ceil(h / lh)))
+    #else
+      return max(1, Int(ceil(h / 20)))
+    #endif
   }
 }
