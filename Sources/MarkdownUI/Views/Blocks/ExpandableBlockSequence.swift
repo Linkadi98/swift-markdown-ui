@@ -58,17 +58,26 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
     for idx in 0..<totalBlockCount {
       var limit: Int?
       if let measured = blockLines[idx] {
+        // We have a measured line count for this block
         if measured <= remaining {
+          // Show entire block (no per-block limit), decrement remaining by measured
           limit = nil
           remaining -= measured
         } else if remaining > 0 {
+          // Only part of this block fits; apply per-block limit equal to remaining
           limit = remaining
           remaining = 0
         } else {
+          // No lines remaining; hide this block
           limit = 0
         }
       } else {
-        if remaining > 0 {
+        // Fallback assumption until measurement is ready: assume 1 line per block
+        let assumedLines = 1
+        if assumedLines <= remaining {
+          limit = nil
+          remaining -= assumedLines
+        } else if remaining > 0 {
           limit = remaining
           remaining = 0
         } else {

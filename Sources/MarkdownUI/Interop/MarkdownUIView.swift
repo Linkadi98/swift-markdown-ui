@@ -26,11 +26,17 @@ public protocol MarkdownUrlHandler {
         private var currentMarkdown: String = ""
         private var lineLimit: Int?
         private var theme: Theme = .basic
+        private var showsExpansionButton: Bool = true
+        private var expansionButtonEnabled: Bool = true
+        private var showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool = true
 
         public init(
             markdown: String,
             lineLimit: Int? = nil,
             theme: Theme = .basic,
+            showsExpansionButton: Bool = true,
+            expansionButtonEnabled: Bool = true,
+            showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool = true,
             onHeightChange: ((CGFloat) -> Void)? = nil,
             mardownTextPreprocessor: MarkdownTextPreProcessor? = nil,
             markdownUrlHandler: MarkdownUrlHandler? = nil
@@ -42,6 +48,10 @@ public protocol MarkdownUrlHandler {
             self.currentMarkdown = markdown
             self.lineLimit = lineLimit
             self.theme = theme
+            self.showsExpansionButton = showsExpansionButton
+            self.expansionButtonEnabled = expansionButtonEnabled
+            self.showExpansionButtonOnlyWhenCollapsedAndTruncated =
+                showExpansionButtonOnlyWhenCollapsedAndTruncated
             self.onHeightChange = onHeightChange
 
             let view = self.buildView(markdown: markdown)
@@ -98,6 +108,10 @@ public protocol MarkdownUrlHandler {
                             get: { [weak self] in self?.internalExpanded ?? false },
                             set: { [weak self] newVal in self?.internalExpanded = newVal }
                         ),
+                        showsExpansionButton: showsExpansionButton,
+                        expansionButtonEnabled: expansionButtonEnabled,
+                        showExpansionButtonOnlyWhenCollapsedAndTruncated:
+                            showExpansionButtonOnlyWhenCollapsedAndTruncated,
                         onExpandChange: { [weak self] newHeight in
                             guard let self else { return }
                             self.hosting.view.layoutIfNeeded()
