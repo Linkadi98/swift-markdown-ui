@@ -65,7 +65,6 @@ class ExpandableMarkdownDisplayNode: ASDisplayNode {
     
     private func calculateSize(for constrainedSize: CGSize) -> CGSize {
         let width = constrainedSize.width
-        ensureMarkdownView()
         
         var height = latestMeasuredHeight
         if let mView = markdownView {
@@ -82,6 +81,7 @@ class ExpandableMarkdownDisplayNode: ASDisplayNode {
         mView.translatesAutoresizingMaskIntoConstraints = true
     }
     
+    
     override func layout() {
         super.layout()
         if let mView = markdownView {
@@ -92,11 +92,7 @@ class ExpandableMarkdownDisplayNode: ASDisplayNode {
     
     override func calculateSizeThatFits(_ constrainedSize: CGSize) -> CGSize {
         let measured: CGSize
-        if Thread.isMainThread {
-            measured = calculateSize(for: constrainedSize)
-        } else {
-            measured = DispatchQueue.main.sync { calculateSize(for: constrainedSize) }
-        }
+        measured = calculateSize(for: constrainedSize)
         self.style.preferredSize = measured
         return measured
     }
