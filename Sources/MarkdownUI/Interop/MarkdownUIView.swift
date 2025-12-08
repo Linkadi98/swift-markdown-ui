@@ -18,9 +18,11 @@ public protocol MarkdownUrlHandler {
         private var hosting: UIHostingController<AnyView>!
         private var currentHeight: CGFloat = 0
         private var onHeightChange: ((CGFloat) -> Void)? = nil
+        private var onTruncationChanged: ((Bool) -> Void)? = nil
         private var preprocessor: MarkdownTextPreProcessor?
         private var markdownUrlHandler: MarkdownUrlHandler?
         private var internalExpanded: Bool = false
+        private var currentCanTruncate: Bool = false
 
         // Store config for updates
         private var currentMarkdown: String = ""
@@ -38,6 +40,7 @@ public protocol MarkdownUrlHandler {
             expansionButtonEnabled: Bool = true,
             showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool = true,
             onHeightChange: ((CGFloat) -> Void)? = nil,
+            onTruncationChanged: ((Bool) -> Void)? = nil,
             mardownTextPreprocessor: MarkdownTextPreProcessor? = nil,
             markdownUrlHandler: MarkdownUrlHandler? = nil
         ) {
@@ -53,6 +56,7 @@ public protocol MarkdownUrlHandler {
             self.showExpansionButtonOnlyWhenCollapsedAndTruncated =
                 showExpansionButtonOnlyWhenCollapsedAndTruncated
             self.onHeightChange = onHeightChange
+            self.onTruncationChanged = onTruncationChanged
 
             let view = self.buildView(markdown: markdown)
             self.hosting = UIHostingController(rootView: view)
@@ -116,6 +120,11 @@ public protocol MarkdownUrlHandler {
                             guard let self else { return }
                             self.hosting.view.layoutIfNeeded()
                             self.updateHeight(newHeight)
+                        },
+                        onTruncationChanged: { [weak self] canTruncate in
+                            guard let self else { return }
+                            self.currentCanTruncate = canTruncate
+                            self.onTruncationChanged?(canTruncate)
                         }
                     )
                     .markdownTheme(theme)
@@ -223,5 +232,9 @@ public protocol MarkdownUrlHandler {
             let h = measured.height > 0 ? measured.height : currentHeight
             return CGSize(width: width, height: ceil(h))
         }
+
+        // MARK: - Observability
+        public var isExpanded: Bool { internalExpanded }
+        public var canTruncate: Bool { currentCanTruncate }
     }
 #endif

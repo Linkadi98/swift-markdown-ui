@@ -5,22 +5,7 @@ import SwiftUI
 struct ExpandableMarkdownDemoView: View {
     @State private var isExpanded: Bool = false
     private let sample = """
-    # Expandable Demo
-    ## Headings
-    ### Subheading Level 3
-    # Expandable Demo
-    ## Headings
-    ### Subheading Level 3
-    # Expandable Demo
-    ## Headings
-    ### Subheading Level 3
-    # Expandable Demo
-    ## Headings
-    ### Subheading Level 3
-    # Expandable Demo
-    ## Headings
-    ### Subheading Level 3
-    
+    This is just simple text
     """
     
     var body: some View {
@@ -34,8 +19,15 @@ struct ExpandableMarkdownDemoView: View {
                         .foregroundColor(.secondary)
                 }
                 
-                ExpandableMarkdown(sample, lineLimit: 5, isExpanded: $isExpanded, expansionButtonEnabled: false, showExpansionButtonOnlyWhenCollapsedAndTruncated: true)
-                    .markdownTheme(.gitHub)
+                ExpandableMarkdown(sample,
+                                   lineLimit: 5,
+                                   isExpanded: $isExpanded,
+                                   expansionButtonEnabled: false,
+                                   showExpansionButtonOnlyWhenCollapsedAndTruncated: true,
+                                   onTruncationChanged: { canBeTruncated in
+                    print("can be truncated: \(canBeTruncated)")
+                })
+                .markdownTheme(.gitHub)
             }
             .padding()
         }

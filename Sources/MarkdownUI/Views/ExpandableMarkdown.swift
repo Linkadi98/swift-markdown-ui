@@ -13,6 +13,7 @@ public struct ExpandableMarkdown: View {
     private let seeMoreText: String
     private let seeLessText: String
     private let onExpandChange: ((Double) -> Void)?
+    private let onTruncationChanged: ((Bool) -> Void)?
     private let showsExpansionButton: Bool
     private let expansionButtonEnabled: Bool
     // If true, the expansion button is only shown when the view is
@@ -54,7 +55,8 @@ public struct ExpandableMarkdown: View {
         showsExpansionButton: Bool = true,
         expansionButtonEnabled: Bool = true,
         showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool = true,
-        onExpandChange: ((Double) -> Void)? = nil
+        onExpandChange: ((Double) -> Void)? = nil,
+        onTruncationChanged: ((Bool) -> Void)? = nil
     ) {
         self.content = content
         self.lineLimit = max(1, lineLimit)
@@ -62,6 +64,7 @@ public struct ExpandableMarkdown: View {
         self.seeLessText = seeLessText
         self.externalExpanded = isExpanded
         self.onExpandChange = onExpandChange
+        self.onTruncationChanged = onTruncationChanged
         self.markdownBinding = nil
         self.showsExpansionButton = showsExpansionButton
         self.expansionButtonEnabled = expansionButtonEnabled
@@ -78,7 +81,8 @@ public struct ExpandableMarkdown: View {
         showsExpansionButton: Bool = true,
         expansionButtonEnabled: Bool = true,
         showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool = true,
-        onExpandChange: ((Double) -> Void)? = nil
+        onExpandChange: ((Double) -> Void)? = nil,
+        onTruncationChanged: ((Bool) -> Void)? = nil
     ) {
         self.init(
             MarkdownContent(markdown),
@@ -90,7 +94,8 @@ public struct ExpandableMarkdown: View {
             expansionButtonEnabled: expansionButtonEnabled,
             showExpansionButtonOnlyWhenCollapsedAndTruncated:
                 showExpansionButtonOnlyWhenCollapsedAndTruncated,
-            onExpandChange: onExpandChange
+            onExpandChange: onExpandChange,
+            onTruncationChanged: onTruncationChanged
         )
     }
 
@@ -101,7 +106,8 @@ public struct ExpandableMarkdown: View {
         seeMoreText: String = "...See more",
         seeLessText: String = "See less",
         isExpanded: Binding<Bool>? = nil,
-        onExpandChange: ((Double) -> Void)? = nil
+        onExpandChange: ((Double) -> Void)? = nil,
+        onTruncationChanged: ((Bool) -> Void)? = nil
     ) {
         self.content = MarkdownContent(markdown.wrappedValue)
         self.lineLimit = max(1, lineLimit)
@@ -109,6 +115,7 @@ public struct ExpandableMarkdown: View {
         self.seeLessText = seeLessText
         self.externalExpanded = isExpanded
         self.onExpandChange = onExpandChange
+        self.onTruncationChanged = onTruncationChanged
         self.markdownBinding = markdown
         // default expansion button config for this initializer
         self.showsExpansionButton = true
@@ -194,7 +201,9 @@ public struct ExpandableMarkdown: View {
 
     private func updateTruncationIfPossible() {
         if expandedContentHeight > 0 && collapsedHeight > 0 {
-            isContentTruncated = expandedContentHeight > (collapsedHeight + 0.5)
+            let canTruncate = expandedContentHeight > (collapsedHeight + 0.5)
+            isContentTruncated = canTruncate
+            onTruncationChanged?(canTruncate)
         }
     }
 
