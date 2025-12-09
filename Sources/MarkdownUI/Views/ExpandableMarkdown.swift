@@ -1,5 +1,42 @@
 import SwiftUI
 
+// Environment key for custom expansion button style
+@available(iOS 15.0, *)
+struct ExpansionButtonStyleKey: EnvironmentKey {
+    static let defaultValue: ExpansionButtonStyle? = nil
+}
+
+@available(iOS 15.0, *)
+extension EnvironmentValues {
+    var expansionButtonStyle: ExpansionButtonStyle? {
+        get { self[ExpansionButtonStyleKey.self] }
+        set { self[ExpansionButtonStyleKey.self] = newValue }
+    }
+}
+
+@available(iOS 15.0, *)
+public struct ExpansionButtonStyle {
+    public var font: Font?
+    public var foregroundColor: Color?
+    public var backgroundColor: Color?
+    public var cornerRadius: CGFloat
+    public var padding: EdgeInsets
+
+    public init(
+        font: Font? = nil,
+        foregroundColor: Color? = nil,
+        backgroundColor: Color? = nil,
+        cornerRadius: CGFloat = 0,
+        padding: EdgeInsets = EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8)
+    ) {
+        self.font = font
+        self.foregroundColor = foregroundColor
+        self.backgroundColor = backgroundColor
+        self.cornerRadius = cornerRadius
+        self.padding = padding
+    }
+}
+
 @available(iOS 15.0, *)
 public struct ExpandableMarkdown: View {
     @Environment(\.colorScheme) public var colorScheme
@@ -7,6 +44,7 @@ public struct ExpandableMarkdown: View {
     @Environment(\.softBreakMode) public var softBreakMode
     @Environment(\.baseURL) public var baseURL
     @Environment(\.imageBaseURL) public var imageBaseURL
+    @Environment(\.expansionButtonStyle) private var expansionButtonStyle
 
     private let content: MarkdownContent
     private let lineLimit: Int
@@ -16,6 +54,7 @@ public struct ExpandableMarkdown: View {
     private let onTruncationChanged: ((Bool) -> Void)?
     private let showsExpansionButton: Bool
     private let expansionButtonEnabled: Bool
+    private let customExpansionButton: ((Bool, () -> Void) -> AnyView)?
 
     // If true, the expansion button is only shown when the view is
     // collapsed and the content is truncated.
@@ -71,6 +110,7 @@ public struct ExpandableMarkdown: View {
         self.expansionButtonEnabled = expansionButtonEnabled
         self.showExpansionButtonOnlyWhenCollapsedAndTruncated =
             showExpansionButtonOnlyWhenCollapsedAndTruncated
+        self.customExpansionButton = nil
     }
 
     public init(
@@ -122,6 +162,7 @@ public struct ExpandableMarkdown: View {
         self.showsExpansionButton = true
         self.expansionButtonEnabled = true
         self.showExpansionButtonOnlyWhenCollapsedAndTruncated = true
+        self.customExpansionButton = nil
     }
 
     public var body: some View {
@@ -138,17 +179,35 @@ public struct ExpandableMarkdown: View {
                     ? (isCollapsed && isContentTruncated)
                     : true)
             if shouldShowButton {
-                Button(action: {
-                    guard expansionButtonEnabled else { return }
-                    expanded.toggle()
-                }) {
-                    Text(expanded ? seeLessText : seeMoreText)
-                        .textStyle(self.theme.link)
-                        .textStyleFont()
-                        .textStyleForegroundColor()
+                if let customButton = customExpansionButton {
+                    customButton(expanded) {
+                        guard expansionButtonEnabled else { return }
+                        expanded.toggle()
+                    }
+                } else {
+                    Button(action: {
+                        guard expansionButtonEnabled else { return }
+                        expanded.toggle()
+                    }) {
+                        let buttonText = Text(expanded ? seeLessText : seeMoreText)
+
+                        if let style = expansionButtonStyle {
+                            buttonText
+                                .font(style.font)
+                                .foregroundColor(style.foregroundColor)
+                                .padding(style.padding)
+                                .background(style.backgroundColor)
+                                .cornerRadius(style.cornerRadius)
+                        } else {
+                            buttonText
+                                .textStyle(self.theme.link)
+                                .textStyleFont()
+                                .textStyleForegroundColor()
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .allowsHitTesting(expansionButtonEnabled)
                 }
-                .buttonStyle(.plain)
-                .allowsHitTesting(expansionButtonEnabled)
             }
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -212,3 +271,34 @@ public struct ExpandableMarkdown: View {
         self.currentContent.blocks.filterImagesMatching(colorScheme: self.colorScheme)
     }
 }
+
+// Public API for styling expansion button
+@available(iOS 15.0, *)
+extension View {
+    /// Apply custom style to the expansion button in ExpandableMarkdown
+    /// - Parameter style: The style to apply to expansion buttons
+    /// - Returns: A view with the custom expansion button style applied
+    public func expansionButtonStyle(_ style: ExpansionButtonStyle) -> some View {
+        self.environment(\.expansionButtonStyle, style)
+    }
+
+    /// Apply custom style to the expansion button using individual parameters
+    public func expansionButtonStyle(
+        font: Font? = nil,
+        foregroundColor: Color? = nil,
+        backgroundColor: Color? = nil,
+        cornerRadius: CGFloat = 0,
+        padding: EdgeInsets = EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8)
+    ) -> some View {
+        let style = ExpansionButtonStyle(
+            font: font,
+            foregroundColor: foregroundColor,
+            backgroundColor: backgroundColor,
+            cornerRadius: cornerRadius,
+            padding: padding
+        )
+        return self.environment(\.expansionButtonStyle, style)
+    }
+}
+
+// Extension to make ExpandableMarkdown copyable - REMOVED (not needed with environment approach)

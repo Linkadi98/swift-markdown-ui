@@ -23,6 +23,8 @@ public protocol MarkdownUrlHandler {
         private var markdownUrlHandler: MarkdownUrlHandler?
         private var internalExpanded: Bool = false
         private var currentCanTruncate: Bool = false
+        private var seeMoreText: String
+        private var seeLessText: String
 
         // Store config for updates
         private var currentMarkdown: String = ""
@@ -31,6 +33,7 @@ public protocol MarkdownUrlHandler {
         private var showsExpansionButton: Bool = true
         private var expansionButtonEnabled: Bool = true
         private var showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool = true
+        private var expansionButtonStyle: ExpansionButtonStyle?
 
         public init(
             markdown: String,
@@ -39,10 +42,13 @@ public protocol MarkdownUrlHandler {
             showsExpansionButton: Bool = true,
             expansionButtonEnabled: Bool = true,
             showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool = true,
+            expansionButtonStyle: ExpansionButtonStyle? = nil,
             onHeightChange: ((CGFloat) -> Void)? = nil,
             onTruncationChanged: ((Bool) -> Void)? = nil,
             mardownTextPreprocessor: MarkdownTextPreProcessor? = nil,
-            markdownUrlHandler: MarkdownUrlHandler? = nil
+            markdownUrlHandler: MarkdownUrlHandler? = nil,
+            seeMoreText: String = "",
+            seeLessText: String = ""
         ) {
             super.init(frame: .zero)
             self.backgroundColor = .clear
@@ -55,8 +61,11 @@ public protocol MarkdownUrlHandler {
             self.expansionButtonEnabled = expansionButtonEnabled
             self.showExpansionButtonOnlyWhenCollapsedAndTruncated =
                 showExpansionButtonOnlyWhenCollapsedAndTruncated
+            self.expansionButtonStyle = expansionButtonStyle
             self.onHeightChange = onHeightChange
             self.onTruncationChanged = onTruncationChanged
+            self.seeLessText = seeLessText
+            self.seeMoreText = seeMoreText
 
             let view = self.buildView(markdown: markdown)
             self.hosting = UIHostingController(rootView: view)
@@ -105,39 +114,59 @@ public protocol MarkdownUrlHandler {
 
             let view: AnyView
             if let lineLimit = self.lineLimit {
-                view = AnyView(
-                    ExpandableMarkdown(
-                        preprocessedMarkdown, lineLimit: lineLimit,
-                        isExpanded: Binding<Bool>(
-                            get: { [weak self] in self?.internalExpanded ?? false },
-                            set: { [weak self] newVal in self?.internalExpanded = newVal }
-                        ),
-                        showsExpansionButton: showsExpansionButton,
-                        expansionButtonEnabled: expansionButtonEnabled,
-                        showExpansionButtonOnlyWhenCollapsedAndTruncated:
-                            showExpansionButtonOnlyWhenCollapsedAndTruncated,
-                        onExpandChange: { [weak self] newHeight in
-                            guard let self else { return }
-                            self.hosting.view.layoutIfNeeded()
-                            self.updateHeight(newHeight)
-                        },
-                        onTruncationChanged: { [weak self] canTruncate in
-                            guard let self else { return }
-                            self.currentCanTruncate = canTruncate
-                            self.onTruncationChanged?(canTruncate)
-                        }
-                    )
-                    .markdownTheme(theme)
-                    .environment(
-                        \.openURL,
-                        OpenURLAction { url in
-                            if let handler = self.markdownUrlHandler {
-                                return handler.onReceive(url: url)
-                            }
-                            return .discarded
-                        }
-                    )
+                var expandableView = ExpandableMarkdown(
+                    preprocessedMarkdown, lineLimit: lineLimit,
+                    seeLessText: seeLessText,
+                    seeMoreText: seeMoreText,
+                    isExpanded: Binding<Bool>(
+                        get: { [weak self] in self?.internalExpanded ?? false },
+                        set: { [weak self] newVal in self?.internalExpanded = newVal }
+                    ),
+                    showsExpansionButton: showsExpansionButton,
+                    expansionButtonEnabled: expansionButtonEnabled,
+                    showExpansionButtonOnlyWhenCollapsedAndTruncated:
+                        showExpansionButtonOnlyWhenCollapsedAndTruncated,
+                    onExpandChange: { [weak self] newHeight in
+                        guard let self else { return }
+                        self.hosting.view.layoutIfNeeded()
+                        self.updateHeight(newHeight)
+                    },
+                    onTruncationChanged: { [weak self] canTruncate in
+                        guard let self else { return }
+                        self.currentCanTruncate = canTruncate
+                        self.onTruncationChanged?(canTruncate)
+                    }
                 )
+                .markdownTheme(theme)
+
+                if let buttonStyle = self.expansionButtonStyle {
+                    view = AnyView(
+                        expandableView
+                            .expansionButtonStyle(buttonStyle)
+                            .environment(
+                                \.openURL,
+                                OpenURLAction { url in
+                                    if let handler = self.markdownUrlHandler {
+                                        return handler.onReceive(url: url)
+                                    }
+                                    return .discarded
+                                }
+                            )
+                    )
+                } else {
+                    view = AnyView(
+                        expandableView
+                            .environment(
+                                \.openURL,
+                                OpenURLAction { url in
+                                    if let handler = self.markdownUrlHandler {
+                                        return handler.onReceive(url: url)
+                                    }
+                                    return .discarded
+                                }
+                            )
+                    )
+                }
             } else {
                 view = AnyView(
                     Markdown(preprocessedMarkdown).markdownTheme(theme).markdownTheme(theme)
@@ -236,5 +265,39 @@ public protocol MarkdownUrlHandler {
         // MARK: - Observability
         public var isExpanded: Bool { internalExpanded }
         public var canTruncate: Bool { currentCanTruncate }
+
+        // MARK: - Expansion Button Style
+
+        /// Update the expansion button style
+        public func setExpansionButtonStyle(_ style: ExpansionButtonStyle?) {
+            self.expansionButtonStyle = style
+            // Rebuild view to apply new style
+            self.hosting.rootView = self.buildView(markdown: currentMarkdown)
+            self.hosting.view.setNeedsLayout()
+            self.hosting.view.layoutIfNeeded()
+        }
+
+        /// Convenience method to set expansion button style with individual parameters
+        public func setExpansionButtonStyle(
+            font: UIFont? = nil,
+            foregroundColor: UIColor? = nil,
+            backgroundColor: UIColor? = nil,
+            cornerRadius: CGFloat = 0,
+            padding: UIEdgeInsets = UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8)
+        ) {
+            let style = ExpansionButtonStyle(
+                font: font.map { Font(($0 as CTFont)) },
+                foregroundColor: foregroundColor.map { Color($0) },
+                backgroundColor: backgroundColor.map { Color($0) },
+                cornerRadius: cornerRadius,
+                padding: EdgeInsets(
+                    top: padding.top,
+                    leading: padding.left,
+                    bottom: padding.bottom,
+                    trailing: padding.right
+                )
+            )
+            setExpansionButtonStyle(style)
+        }
     }
 #endif
