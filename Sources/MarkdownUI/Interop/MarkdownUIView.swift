@@ -50,6 +50,9 @@ public protocol MarkdownUrlHandler {
             seeMoreText: String = "",
             seeLessText: String = ""
         ) {
+            self.seeLessText = seeLessText
+            self.seeMoreText = seeMoreText
+            
             super.init(frame: .zero)
             self.backgroundColor = .clear
             self.preprocessor = mardownTextPreprocessor
@@ -64,8 +67,6 @@ public protocol MarkdownUrlHandler {
             self.expansionButtonStyle = expansionButtonStyle
             self.onHeightChange = onHeightChange
             self.onTruncationChanged = onTruncationChanged
-            self.seeLessText = seeLessText
-            self.seeMoreText = seeMoreText
 
             let view = self.buildView(markdown: markdown)
             self.hosting = UIHostingController(rootView: view)
