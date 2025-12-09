@@ -186,11 +186,11 @@ public protocol MarkdownUrlHandler {
             if let lineLimit = self.lineLimit {
                 view = AnyView(
                     ExpandableMarkdownWrapper(
+                        expandedStateHolder: expandedStateHolder,
                         markdown: preprocessedMarkdown,
                         lineLimit: lineLimit,
                         seeMoreText: seeMoreText,
                         seeLessText: seeLessText,
-                        expandedStateHolder: expandedStateHolder,
                         showsExpansionButton: showsExpansionButton,
                         expansionButtonEnabled: expansionButtonEnabled,
                         showExpansionButtonOnlyWhenCollapsedAndTruncated:
