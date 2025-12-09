@@ -4,6 +4,8 @@ import SwiftUI
 struct ListItemView: View {
   @Environment(\.theme.listItem) private var listItem
   @Environment(\.listLevel) private var listLevel
+  @Environment(\.markdownRemainingLines) private var remainingLines
+  @Environment(\.markdownAggregateIndex) private var aggregateIndex
 
   private let item: RawListItem
   private let number: Int
@@ -29,11 +31,33 @@ struct ListItemView: View {
         content: .init(blocks: item.children)
       )
     )
+    .background(
+      GeometryReader { _ in
+        Color.clear.preference(
+          key: BlockLinesPreferenceKey.self,
+          value: self.shouldPublish ? [self.publishIndex(): 0] : [:]
+        )
+      }
+    )
+    .transformPreference(BlockLinesPreferenceKey.self) { pref in
+      if self.shouldPublish {
+        let total = pref.values.reduce(0, +)
+        pref = [self.publishIndex(): total]
+      }
+    }
+  }
+
+  private var shouldPublish: Bool {
+    remainingLines >= 1000
+  }
+
+  private func publishIndex() -> Int {
+    aggregateIndex ?? 0
   }
 
   private var label: some View {
     Label {
-      BlockSequence(self.item.children)
+      ExpandableBlockSequence(self.item.children)
     } icon: {
       self.markerStyle
         .makeBody(configuration: .init(listLevel: self.listLevel, itemNumber: self.number))

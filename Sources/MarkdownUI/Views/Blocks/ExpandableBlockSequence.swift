@@ -61,7 +61,9 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
         var result: [(index: Int, limit: Int?)] = []
         for idx in 0..<totalBlockCount {
             let measured = blockLines[idx]
-            let contribution = max(0, measured ?? 1)  // fallback assume 1 line if not measured yet
+            // Treat known non-text structural blocks as zero-cost when not measured yet
+            let fallback: Int = 1
+            let contribution = max(0, measured ?? fallback)
             if contribution <= remaining {
                 result.append((idx, nil))
                 remaining -= contribution
@@ -108,6 +110,7 @@ struct ExpandableBlockSequence: View {
                 let remainingLines = block.limit ?? Int.max
                 element.value
                     .environment(\.markdownBlockIndex, block.index)
+                    .environment(\.markdownAggregateIndex, block.index)
                     .environment(\.markdownRemainingLines, remainingLines)
             }
         }
@@ -121,6 +124,7 @@ struct ExpandableBlockSequence: View {
                         ForEach(self.blocks, id: \.self) { element in
                             element.value
                                 .environment(\.markdownBlockIndex, element.index)
+                                .environment(\.markdownAggregateIndex, element.index)
                                 .environment(\.markdownRemainingLines, 1000)
                         }
                     }

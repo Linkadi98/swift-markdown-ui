@@ -4,6 +4,7 @@ import SwiftUI
 private struct InlineLineCountReporter: View {
   @Environment(\.markdownRemainingLines) private var remainingLines
   @Environment(\.markdownBlockIndex) private var blockIndex
+  @Environment(\.markdownAggregateIndex) private var aggregateIndex
 
   let content: Text
 
@@ -53,13 +54,18 @@ private struct InlineLineCountReporter: View {
         if remainingLines >= 1000 {
           Color.clear.preference(
             key: BlockLinesPreferenceKey.self,
-            value: [self.blockIndex: self.computeUsedLines()]
+            value: [self.publishIndex(): self.computeUsedLines()]
           )
         } else {
           Color.clear.preference(key: BlockLinesPreferenceKey.self, value: [:])
         }
       }
     )
+  }
+
+  private func publishIndex() -> Int {
+    let idx = aggregateIndex >= 0 ? aggregateIndex : blockIndex
+    return idx >= 0 ? idx : 0
   }
 
   private func computeUsedLines() -> Int {

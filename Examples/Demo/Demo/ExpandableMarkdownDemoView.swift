@@ -7,8 +7,13 @@ struct ExpandableMarkdownDemoView: View {
     private let sample = """
     # Item three with multiple lines to check 
 
-    ## Headings wrapping behavior in collapsed mode. This line should continue to demonstrate truncation.
-    ### Subheading Level 3
+    ## Headings wrapping 
+    Bulletin: 
+    - First item in a list First item in a list First item in a list
+    - Second item.
+    - Third item
+
+
     """
     
     var body: some View {
@@ -23,7 +28,7 @@ struct ExpandableMarkdownDemoView: View {
                 }
                 
                 ExpandableMarkdown(sample,
-                                   lineLimit: 2,
+                                   lineLimit: 6,
                                    isExpanded: $isExpanded,
                                    expansionButtonEnabled: false,
                                    showExpansionButtonOnlyWhenCollapsedAndTruncated: true,

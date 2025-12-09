@@ -6,18 +6,24 @@ extension EnvironmentValues {
         get { self[MarkdownMaxLinesKey.self] }
         set { self[MarkdownMaxLinesKey.self] = newValue }
     }
-    
+
     var markdownRemainingLines: Int {
         get { self[MarkdownRemainingLinesKey.self] }
         set { self[MarkdownRemainingLinesKey.self] = newValue }
     }
-    
+
     // The index of the current block being rendered; used for per-block measurements
     var markdownBlockIndex: Int {
         get { self[MarkdownBlockIndexKey.self] }
         set { self[MarkdownBlockIndexKey.self] = newValue }
     }
-        
+
+    // The aggregate index for nested content to report under its parent block
+    var markdownAggregateIndex: Int {
+        get { self[MarkdownAggregateIndexKey.self] }
+        set { self[MarkdownAggregateIndexKey.self] = newValue }
+    }
+
     // The index of the current block being rendered; used for per-block measurements
     var markdownShouldExpand: Bool {
         get { self[MarkdownExpandableKey.self] }
@@ -37,6 +43,11 @@ private struct MarkdownRemainingLinesKey: EnvironmentKey {
 
 @available(iOS 15.0, *)
 private struct MarkdownBlockIndexKey: EnvironmentKey {
+    static let defaultValue: Int = -1
+}
+
+@available(iOS 15.0, *)
+private struct MarkdownAggregateIndexKey: EnvironmentKey {
     static let defaultValue: Int = -1
 }
 
