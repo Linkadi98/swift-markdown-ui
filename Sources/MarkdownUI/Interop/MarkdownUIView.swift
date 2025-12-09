@@ -114,10 +114,10 @@ public protocol MarkdownUrlHandler {
 
             let view: AnyView
             if let lineLimit = self.lineLimit {
-                var expandableView = ExpandableMarkdown(
+                let expandableView = ExpandableMarkdown(
                     preprocessedMarkdown, lineLimit: lineLimit,
-                    seeLessText: seeLessText,
                     seeMoreText: seeMoreText,
+                    seeLessText: seeLessText,
                     isExpanded: Binding<Bool>(
                         get: { [weak self] in self?.internalExpanded ?? false },
                         set: { [weak self] newVal in self?.internalExpanded = newVal }
