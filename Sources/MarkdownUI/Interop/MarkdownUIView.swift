@@ -1,6 +1,73 @@
 import SwiftUI
 
 @available(iOS 15.0, *)
+class ExpandedStateHolder: ObservableObject {
+    @Published var isExpanded: Bool = false
+}
+
+@available(iOS 15.0, *)
+struct ExpandableMarkdownWrapper: View {
+    @ObservedObject var expandedStateHolder: ExpandedStateHolder
+
+    let markdown: String
+    let lineLimit: Int
+    let seeMoreText: String
+    let seeLessText: String
+    let showsExpansionButton: Bool
+    let expansionButtonEnabled: Bool
+    let showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool
+    let theme: Theme
+    let softBreakMode: SoftBreak.Mode
+    let expansionButtonStyle: ExpansionButtonStyle?
+    let markdownUrlHandler: MarkdownUrlHandler?
+    let onExpandChange: (Double) -> Void
+    let onTruncationChanged: (Bool) -> Void
+
+    var body: some View {
+        let expandableView = ExpandableMarkdown(
+            markdown,
+            lineLimit: lineLimit,
+            seeMoreText: seeMoreText,
+            seeLessText: seeLessText,
+            isExpanded: $expandedStateHolder.isExpanded,
+            showsExpansionButton: showsExpansionButton,
+            expansionButtonEnabled: expansionButtonEnabled,
+            showExpansionButtonOnlyWhenCollapsedAndTruncated:
+                showExpansionButtonOnlyWhenCollapsedAndTruncated,
+            onExpandChange: onExpandChange,
+            onTruncationChanged: onTruncationChanged
+        )
+        .markdownTheme(theme)
+        .markdownSoftBreakMode(softBreakMode)
+
+        if let buttonStyle = expansionButtonStyle {
+            expandableView
+                .expansionButtonStyle(buttonStyle)
+                .environment(
+                    \.openURL,
+                    OpenURLAction { url in
+                        if let handler = markdownUrlHandler {
+                            return handler.onReceive(url: url)
+                        }
+                        return .discarded
+                    }
+                )
+        } else {
+            expandableView
+                .environment(
+                    \.openURL,
+                    OpenURLAction { url in
+                        if let handler = markdownUrlHandler {
+                            return handler.onReceive(url: url)
+                        }
+                        return .discarded
+                    }
+                )
+        }
+    }
+}
+
+@available(iOS 15.0, *)
 public protocol MarkdownTextPreProcessor {
     func preprocess(text: String) -> String
 }
@@ -21,7 +88,7 @@ public protocol MarkdownUrlHandler {
         private var onTruncationChanged: ((Bool) -> Void)? = nil
         private var preprocessor: MarkdownTextPreProcessor?
         private var markdownUrlHandler: MarkdownUrlHandler?
-        private var internalExpanded: Bool = false
+        private var expandedStateHolder = ExpandedStateHolder()
         private var currentCanTruncate: Bool = false
         private var seeMoreText: String
         private var seeLessText: String
@@ -79,9 +146,8 @@ public protocol MarkdownUrlHandler {
 
         // MARK: - Expand / Collapse controls for UIKit
         public func setExpanded(_ expanded: Bool) {
-            internalExpanded = expanded
-            // Rebuild to ensure SwiftUI picks up latest state immediately
-            self.hosting.rootView = self.buildView(markdown: currentMarkdown)
+            expandedStateHolder.isExpanded = expanded
+            // Trigger layout update
             self.hosting.view.setNeedsLayout()
             self.hosting.view.layoutIfNeeded()
             let width = self.bounds.width > 0 ? self.bounds.width : UIScreen.main.bounds.width
@@ -91,7 +157,7 @@ public protocol MarkdownUrlHandler {
 
         public func expand() { setExpanded(true) }
         public func collapse() { setExpanded(false) }
-        public func toggle() { setExpanded(!internalExpanded) }
+        public func toggle() { setExpanded(!expandedStateHolder.isExpanded) }
 
         /// Updates the markdown text and rebuilds the view
         public func updateMarkdown(_ markdown: String) {
@@ -118,60 +184,33 @@ public protocol MarkdownUrlHandler {
 
             let view: AnyView
             if let lineLimit = self.lineLimit {
-                let expandableView = ExpandableMarkdown(
-                    preprocessedMarkdown, lineLimit: lineLimit,
-                    seeMoreText: seeMoreText,
-                    seeLessText: seeLessText,
-                    isExpanded: Binding<Bool>(
-                        get: { [weak self] in self?.internalExpanded ?? false },
-                        set: { [weak self] newVal in self?.internalExpanded = newVal }
-                    ),
-                    showsExpansionButton: showsExpansionButton,
-                    expansionButtonEnabled: expansionButtonEnabled,
-                    showExpansionButtonOnlyWhenCollapsedAndTruncated:
-                        showExpansionButtonOnlyWhenCollapsedAndTruncated,
-                    onExpandChange: { [weak self] newHeight in
-                        guard let self else { return }
-                        self.hosting.view.layoutIfNeeded()
-                        self.updateHeight(newHeight)
-                    },
-                    onTruncationChanged: { [weak self] canTruncate in
-                        guard let self else { return }
-                        self.currentCanTruncate = canTruncate
-                        self.onTruncationChanged?(canTruncate)
-                    }
+                view = AnyView(
+                    ExpandableMarkdownWrapper(
+                        markdown: preprocessedMarkdown,
+                        lineLimit: lineLimit,
+                        seeMoreText: seeMoreText,
+                        seeLessText: seeLessText,
+                        expandedStateHolder: expandedStateHolder,
+                        showsExpansionButton: showsExpansionButton,
+                        expansionButtonEnabled: expansionButtonEnabled,
+                        showExpansionButtonOnlyWhenCollapsedAndTruncated:
+                            showExpansionButtonOnlyWhenCollapsedAndTruncated,
+                        theme: theme,
+                        softBreakMode: softBreakMode,
+                        expansionButtonStyle: expansionButtonStyle,
+                        markdownUrlHandler: markdownUrlHandler,
+                        onExpandChange: { [weak self] newHeight in
+                            guard let self else { return }
+                            self.hosting.view.layoutIfNeeded()
+                            self.updateHeight(newHeight)
+                        },
+                        onTruncationChanged: { [weak self] canTruncate in
+                            guard let self else { return }
+                            self.currentCanTruncate = canTruncate
+                            self.onTruncationChanged?(canTruncate)
+                        }
+                    )
                 )
-                .markdownTheme(theme)
-                .markdownSoftBreakMode(self.softBreakMode)
-
-                if let buttonStyle = self.expansionButtonStyle {
-                    view = AnyView(
-                        expandableView
-                            .expansionButtonStyle(buttonStyle)
-                            .environment(
-                                \.openURL,
-                                OpenURLAction { url in
-                                    if let handler = self.markdownUrlHandler {
-                                        return handler.onReceive(url: url)
-                                    }
-                                    return .discarded
-                                }
-                            )
-                    )
-                } else {
-                    view = AnyView(
-                        expandableView
-                            .environment(
-                                \.openURL,
-                                OpenURLAction { url in
-                                    if let handler = self.markdownUrlHandler {
-                                        return handler.onReceive(url: url)
-                                    }
-                                    return .discarded
-                                }
-                            )
-                    )
-                }
             } else {
                 view = AnyView(
                     Markdown(preprocessedMarkdown)
@@ -270,7 +309,7 @@ public protocol MarkdownUrlHandler {
         }
 
         // MARK: - Observability
-        public var isExpanded: Bool { internalExpanded }
+        public var isExpanded: Bool { expandedStateHolder.isExpanded }
         public var canTruncate: Bool { currentCanTruncate }
 
         // MARK: - Expansion Button Style
