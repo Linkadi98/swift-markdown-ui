@@ -23,7 +23,7 @@ struct ExpandableMarkdownDemoView: View {
                 }
                 
                 ExpandableMarkdown(sample,
-                                   lineLimit: 5,
+                                   lineLimit: 2,
                                    isExpanded: $isExpanded,
                                    expansionButtonEnabled: false,
                                    showExpansionButtonOnlyWhenCollapsedAndTruncated: true,

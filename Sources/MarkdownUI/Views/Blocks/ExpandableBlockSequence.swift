@@ -4,13 +4,13 @@ import SwiftUI
 final class ExpandableBlockSequenceViewModel: ObservableObject {
     @Published var blockLines: [Int: Int] = [:]
     @Published var isMeasuredReady: Bool = false
-    
+
     let totalBlocks: Int
-    
+
     init(totalBlocks: Int) {
         self.totalBlocks = totalBlocks
     }
-    
+
     func applyMeasuredLines(_ values: [Int: Int]) {
         // Ignore empty snapshots to avoid oscillation between [:] and measured values
         guard !values.isEmpty else { return }
@@ -21,10 +21,12 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
         // Mark ready as soon as we have any measurements; continue to refine as more arrive
         if !isMeasuredReady && values.count > 0 {
             isMeasuredReady = true
-            mdDbg("✅ Measurement started. Received \(values.count) of \(totalBlocks) block measurements")
+            mdDbg(
+                "✅ Measurement started. Received \(values.count) of \(totalBlocks) block measurements"
+            )
         }
     }
-    
+
     func updateBlockLines(index: Int, lines: Int) {
         mdDbg("📏 measured block #\(index) -> \(lines) lines (\(blockLines.count)/\(totalBlocks))")
         var changed = false
@@ -35,10 +37,12 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
         // Mark ready only when all blocks have reported at least once
         isMeasuredReady = (blockLines.count >= totalBlocks)
         if changed {
-            mdDbg("📏 measured block #\(index) -> \(lines) lines (\(blockLines.count)/\(totalBlocks)) changed")
+            mdDbg(
+                "📏 measured block #\(index) -> \(lines) lines (\(blockLines.count)/\(totalBlocks)) changed"
+            )
         }
     }
-    
+
     // Compute visible block indices along with their applicable line limits
     // Reserve at least `reserveForFirstContent` lines for the first content block (non-heading/non-rule)
     func visibleBlocks(
@@ -57,7 +61,7 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
         var result: [(index: Int, limit: Int?)] = []
         for idx in 0..<totalBlockCount {
             let measured = blockLines[idx]
-            let contribution = max(0, measured ?? 1) // fallback assume 1 line if not measured yet
+            let contribution = max(0, measured ?? 1)  // fallback assume 1 line if not measured yet
             if contribution <= remaining {
                 result.append((idx, nil))
                 remaining -= contribution
@@ -76,11 +80,11 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
 struct ExpandableBlockSequence: View {
     @Environment(\.markdownMaxLines) private var maxLines
     @Environment(\.markdownShouldExpand) private var isExpanded
-    
+
     @StateObject private var viewModel: ExpandableBlockSequenceViewModel
-    
+
     private let blocks: [Indexed<BlockNode>]
-    
+
     init(_ blocks: [BlockNode]) {
         let indexed = blocks.indexed()
         self.blocks = indexed
@@ -88,7 +92,7 @@ struct ExpandableBlockSequence: View {
             wrappedValue: ExpandableBlockSequenceViewModel(totalBlocks: indexed.count))
         mdDbg("🎬 ExpandableBlockSequence init - totalBlocks: \(indexed.count)")
     }
-    
+
     var body: some View {
         // Compute visible blocks using measured per-block line counts
         let visibleBlocks = viewModel.visibleBlocks(
@@ -96,7 +100,7 @@ struct ExpandableBlockSequence: View {
             maxLines: maxLines,
             isExpanded: isExpanded
         )
-        
+
         // Visible content: collapsed or expanded using measured/cached line counts
         return VStack(alignment: .leading, spacing: 8) {
             ForEach(visibleBlocks, id: \.index) { block in
@@ -110,22 +114,25 @@ struct ExpandableBlockSequence: View {
         // Start measurement immediately on appear without affecting layout
         .background(
             Group {
-                if (!viewModel.isMeasuredReady) || (viewModel.blockLines.count < blocks.count) || isExpanded {
+                if (!viewModel.isMeasuredReady) || (viewModel.blockLines.count < blocks.count)
+                    || isExpanded
+                {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(self.blocks, id: \.self) { element in
                             element.value
                                 .environment(\.markdownBlockIndex, element.index)
                                 .environment(\.markdownRemainingLines, 1000)
-                                .onLineCountChange { lines in
-                                    DispatchQueue.main.async {
-                                        viewModel.updateBlockLines(index: element.index, lines: lines)
-                                    }
-                                }
                         }
                     }
                     .opacity(0)
                     .allowsHitTesting(false)
                     .transaction { $0.disablesAnimations = true }
+                }
+            }
+            // Collect inline-reported measurements from the measuring tree
+            .onPreferenceChange(BlockLinesPreferenceKey.self) { values in
+                DispatchQueue.main.async {
+                    viewModel.applyMeasuredLines(values)
                 }
             }
         )
