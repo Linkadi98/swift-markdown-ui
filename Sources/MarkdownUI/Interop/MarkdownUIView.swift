@@ -34,6 +34,7 @@ public protocol MarkdownUrlHandler {
         private var expansionButtonEnabled: Bool = true
         private var showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool = true
         private var expansionButtonStyle: ExpansionButtonStyle?
+        private var softBreakMode: SoftBreak.Mode = .lineBreak  // Default to preserve newlines
 
         public init(
             markdown: String,
@@ -43,6 +44,7 @@ public protocol MarkdownUrlHandler {
             expansionButtonEnabled: Bool = true,
             showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool = true,
             expansionButtonStyle: ExpansionButtonStyle? = nil,
+            softBreakMode: SoftBreak.Mode = .lineBreak,
             onHeightChange: ((CGFloat) -> Void)? = nil,
             onTruncationChanged: ((Bool) -> Void)? = nil,
             mardownTextPreprocessor: MarkdownTextPreProcessor? = nil,
@@ -52,7 +54,7 @@ public protocol MarkdownUrlHandler {
         ) {
             self.seeLessText = seeLessText
             self.seeMoreText = seeMoreText
-            
+
             super.init(frame: .zero)
             self.backgroundColor = .clear
             self.preprocessor = mardownTextPreprocessor
@@ -65,6 +67,7 @@ public protocol MarkdownUrlHandler {
             self.showExpansionButtonOnlyWhenCollapsedAndTruncated =
                 showExpansionButtonOnlyWhenCollapsedAndTruncated
             self.expansionButtonStyle = expansionButtonStyle
+            self.softBreakMode = softBreakMode
             self.onHeightChange = onHeightChange
             self.onTruncationChanged = onTruncationChanged
 
@@ -139,6 +142,7 @@ public protocol MarkdownUrlHandler {
                     }
                 )
                 .markdownTheme(theme)
+                .markdownSoftBreakMode(self.softBreakMode)
 
                 if let buttonStyle = self.expansionButtonStyle {
                     view = AnyView(
@@ -170,7 +174,9 @@ public protocol MarkdownUrlHandler {
                 }
             } else {
                 view = AnyView(
-                    Markdown(preprocessedMarkdown).markdownTheme(theme).markdownTheme(theme)
+                    Markdown(preprocessedMarkdown)
+                        .markdownTheme(theme)
+                        .markdownSoftBreakMode(self.softBreakMode)
                         .environment(
                             \.openURL,
                             OpenURLAction { url in
@@ -299,6 +305,18 @@ public protocol MarkdownUrlHandler {
                 )
             )
             setExpansionButtonStyle(style)
+        }
+
+        // MARK: - Soft Break Mode
+
+        /// Update the soft break mode to control how newlines are rendered
+        /// - Parameter mode: `.space` treats newlines as spaces (default Markdown), `.lineBreak` preserves newlines
+        public func setSoftBreakMode(_ mode: SoftBreak.Mode) {
+            self.softBreakMode = mode
+            // Rebuild view to apply new mode
+            self.hosting.rootView = self.buildView(markdown: currentMarkdown)
+            self.hosting.view.setNeedsLayout()
+            self.hosting.view.layoutIfNeeded()
         }
     }
 #endif
