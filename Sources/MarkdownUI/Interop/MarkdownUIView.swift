@@ -245,11 +245,14 @@ public protocol MarkdownUrlHandler {
 
             // Pin leading, trailing, and top only
             // Let the hosting view determine its own height based on SwiftUI content
+            let bottom = child.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor)
+            bottom.priority = .required
+
             NSLayoutConstraint.activate([
                 child.leadingAnchor.constraint(equalTo: leadingAnchor),
                 child.trailingAnchor.constraint(equalTo: trailingAnchor),
                 child.topAnchor.constraint(equalTo: topAnchor),
-                child.bottomAnchor.constraint(equalTo: bottomAnchor),
+                bottom,
             ])
 
             // Set content hugging to high so it doesn't stretch
@@ -303,7 +306,6 @@ public protocol MarkdownUrlHandler {
                 withHorizontalFittingPriority: .required,
                 verticalFittingPriority: .fittingSizeLevel
             )
-
         }
 
         public override var intrinsicContentSize: CGSize {
