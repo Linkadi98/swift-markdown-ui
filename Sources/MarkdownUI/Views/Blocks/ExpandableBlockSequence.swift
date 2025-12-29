@@ -104,7 +104,7 @@ struct ExpandableBlockSequence: View {
         )
 
         // Visible content: collapsed or expanded using measured/cached line counts
-        return LazyVStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: 8) {
             ForEach(visibleBlocks, id: \.index) { block in
                 let element = blocks[block.index]
                 let remainingLines = block.limit ?? Int.max
