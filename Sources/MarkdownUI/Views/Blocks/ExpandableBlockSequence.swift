@@ -57,10 +57,13 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
             return (0..<totalBlockCount).map { (index: $0, limit: nil) }
         }
         guard let maxLines else { return [] }
+        let isMeasurementComplete = (blockLines.count >= totalBlockCount)
         var remaining = maxLines
         var result: [(index: Int, limit: Int?)] = []
         for idx in 0..<totalBlockCount {
-            let measured = blockLines[idx]
+            // Avoid height jitter while measurements stream in: keep collapsed budgeting stable
+            // until we have a complete snapshot.
+            let measured = (!isExpanded && !isMeasurementComplete) ? nil : blockLines[idx]
             // Treat known non-text structural blocks as zero-cost when not measured yet
             let fallback: Int = 1
             let contribution = max(0, measured ?? fallback)

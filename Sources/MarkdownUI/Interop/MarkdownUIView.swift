@@ -84,6 +84,11 @@ public protocol MarkdownUrlHandler {
     public final class MarkdownUIView: UIView {
         private var hosting: UIHostingController<AnyView>!
         private var currentHeight: CGFloat = 0
+        private var lastMeasuredWidth: CGFloat = 0
+        private var pendingHeightWorkItem: DispatchWorkItem?
+        private var pendingHeight: CGFloat?
+
+        private let heightEpsilon: CGFloat = 0.5
         private var onHeightChange: ((CGFloat) -> Void)? = nil
         private var onTruncationChanged: ((Bool) -> Void)? = nil
         private var preprocessor: MarkdownTextPreProcessor?
@@ -201,8 +206,7 @@ public protocol MarkdownUrlHandler {
                         markdownUrlHandler: markdownUrlHandler,
                         onExpandChange: { [weak self] newHeight in
                             guard let self else { return }
-                            self.hosting.view.layoutIfNeeded()
-                            self.updateHeight(newHeight)
+                            self.updateHeight(CGFloat(newHeight))
                         },
                         onTruncationChanged: { [weak self] canTruncate in
                             guard let self else { return }
@@ -256,12 +260,32 @@ public protocol MarkdownUrlHandler {
         }
 
         private func updateHeight(_ height: CGFloat) {
-            guard height != currentHeight else { return }
-            currentHeight = height
+            let normalized = ceil(height)
+            guard normalized.isFinite, normalized > 0 else { return }
 
-            self.setNeedsLayout()
+            // Avoid feedback loops from tiny fluctuations.
+            guard abs(normalized - currentHeight) > heightEpsilon else { return }
 
-            self.onHeightChange?(self.currentHeight)
+            pendingHeight = normalized
+            pendingHeightWorkItem?.cancel()
+
+            let work = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                let nextHeight = self.pendingHeight ?? normalized
+                self.pendingHeight = nil
+                guard abs(nextHeight - self.currentHeight) > self.heightEpsilon else { return }
+
+                self.currentHeight = nextHeight
+
+                UIView.performWithoutAnimation {
+                    self.invalidateIntrinsicContentSize()
+                    self.setNeedsLayout()
+                    self.onHeightChange?(nextHeight)
+                }
+            }
+
+            pendingHeightWorkItem = work
+            DispatchQueue.main.async(execute: work)
         }
 
         private func getHostingViewPrefersize() -> CGSize {
@@ -283,6 +307,13 @@ public protocol MarkdownUrlHandler {
         public override func layoutSubviews() {
             super.layoutSubviews()
             let width = self.bounds.width > 0 ? self.bounds.width : UIScreen.main.bounds.width
+
+            // Measuring inside layoutSubviews can create a loop when the parent adjusts constraints
+            // in response to onHeightChange. Only re-measure when width changes or height unknown.
+            let widthChanged = abs(width - lastMeasuredWidth) > heightEpsilon
+            guard widthChanged || currentHeight <= 0 else { return }
+            lastMeasuredWidth = width
+
             let h = sizeThatFitsWidth(width).height
             if h > 0 { updateHeight(h) }
         }
