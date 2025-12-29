@@ -4,6 +4,9 @@ import SwiftUI
 final class ExpandableBlockSequenceViewModel: ObservableObject {
     @Published var blockLines: [Int: Int] = [:]
     @Published var isMeasuredReady: Bool = false
+    @Published var isMeasuring: Bool = true
+
+    private var stopMeasuringWorkItem: DispatchWorkItem?
 
     let totalBlocks: Int
 
@@ -25,6 +28,17 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
                 "✅ Measurement started. Received \(values.count) of \(totalBlocks) block measurements"
             )
         }
+
+        // Stop the hidden measuring tree once measurements have been stable for a short period.
+        // Some block types don't publish line counts, so waiting for count == totalBlocks
+        // would keep measuring forever for long documents.
+        isMeasuring = true
+        stopMeasuringWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.isMeasuring = false
+        }
+        stopMeasuringWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
     }
 
     func updateBlockLines(index: Int, lines: Int) {
@@ -46,27 +60,23 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
     // Compute visible block indices along with their applicable line limits
     // Reserve at least `reserveForFirstContent` lines for the first content block (non-heading/non-rule)
     func visibleBlocks(
-        totalBlockCount: Int,
+        blocks: [Indexed<BlockNode>],
         maxLines: Int?,
         isExpanded: Bool
     ) -> [(index: Int, limit: Int?)] {
         mdDbg(
-            "🔍 visibleBlocks - totalBlockCount: \(totalBlockCount), maxLines: \(String(describing: maxLines)), isExpanded: \(isExpanded)"
+            "🔍 visibleBlocks - totalBlockCount: \(blocks.count), maxLines: \(String(describing: maxLines)), isExpanded: \(isExpanded)"
         )
         if isExpanded || maxLines == nil {
-            return (0..<totalBlockCount).map { (index: $0, limit: nil) }
+            return (0..<blocks.count).map { (index: $0, limit: nil) }
         }
         guard let maxLines else { return [] }
-        let isMeasurementComplete = (blockLines.count >= totalBlockCount)
         var remaining = maxLines
         var result: [(index: Int, limit: Int?)] = []
-        for idx in 0..<totalBlockCount {
-            // Avoid height jitter while measurements stream in: keep collapsed budgeting stable
-            // until we have a complete snapshot.
-            let measured = (!isExpanded && !isMeasurementComplete) ? nil : blockLines[idx]
-            // Treat known non-text structural blocks as zero-cost when not measured yet
-            let fallback: Int = 1
-            let contribution = max(0, measured ?? fallback)
+        for idx in 0..<blocks.count {
+            let measured = blockLines[idx]
+            let contribution = max(
+                0, measured ?? fallbackContribution(for: blocks[idx].value, remaining: remaining))
             if contribution <= remaining {
                 result.append((idx, nil))
                 remaining -= contribution
@@ -78,6 +88,26 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
         }
         mdDbg("🔍 visibleBlocks - result: \(result.map { $0.index }), rem=\(remaining)")
         return result
+    }
+
+    private func fallbackContribution(for block: BlockNode, remaining: Int) -> Int {
+        // Conservative defaults to avoid showing too much content before measurement arrives.
+        // This makes collapsed height grow (not shrink) as we refine measurements.
+        switch block {
+        case .thematicBreak:
+            return 0
+        case .heading:
+            return 1
+        case .htmlBlock:
+            return 1
+        case .codeBlock:
+            // Force partial rendering until measured.
+            return remaining + 1
+        case .table:
+            return remaining + 1
+        case .blockquote, .bulletedList, .numberedList, .taskList, .paragraph:
+            return remaining + 1
+        }
     }
 }
 
@@ -101,7 +131,7 @@ struct ExpandableBlockSequence: View {
     var body: some View {
         // Compute visible blocks using measured per-block line counts
         let visibleBlocks = viewModel.visibleBlocks(
-            totalBlockCount: blocks.count,
+            blocks: blocks,
             maxLines: maxLines,
             isExpanded: isExpanded
         )
@@ -120,9 +150,7 @@ struct ExpandableBlockSequence: View {
         // Start measurement immediately on appear without affecting layout
         .background(
             Group {
-                if (!viewModel.isMeasuredReady) || (viewModel.blockLines.count < blocks.count)
-                    || isExpanded
-                {
+                if viewModel.isMeasuring || isExpanded {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(self.blocks, id: \.self) { element in
                             element.value

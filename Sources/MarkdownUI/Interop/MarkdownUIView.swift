@@ -364,7 +364,7 @@ public protocol MarkdownUrlHandler {
                 lastProposed = proposedMaxHeight
 
                 let targetSize = CGSize(width: width, height: proposedMaxHeight)
-                hosting.view.bounds.size = targetSize
+                hosting.view.frame = CGRect(origin: .zero, size: targetSize)
                 hosting.view.setNeedsLayout()
                 hosting.view.layoutIfNeeded()
 
@@ -385,7 +385,8 @@ public protocol MarkdownUrlHandler {
 
                 // We likely hit the cap. Grow the proposal relative to what we observed.
                 // This keeps the number of iterations low even for very long content.
-                let next = max(proposedMaxHeight * 2, max(ceil(measured.height) * 2, proposedMaxHeight + 1))
+                let next = max(
+                    proposedMaxHeight * 2, max(ceil(measured.height) * 2, proposedMaxHeight + 1))
                 proposedMaxHeight = min(next, absoluteCap)
             }
 
