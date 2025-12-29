@@ -88,6 +88,10 @@ public protocol MarkdownUrlHandler {
         private var pendingHeight: CGFloat?
         private var isApplyingHeight: Bool = false
 
+        // Monotonically increasing token used to ignore stale async callbacks
+        // when markdown/config is updated rapidly (e.g. table/collection resets).
+        private var contentVersion: UInt = 0
+
         private var hostingHeightConstraint: NSLayoutConstraint?
 
         private let heightEpsilon: CGFloat = 0.5
@@ -157,6 +161,13 @@ public protocol MarkdownUrlHandler {
 
         // MARK: - Expand / Collapse controls for UIKit
         public func setExpanded(_ expanded: Bool) {
+            if !Thread.isMainThread {
+                DispatchQueue.main.async { [weak self] in
+                    self?.setExpanded(expanded)
+                }
+                return
+            }
+
             expandedStateHolder.isExpanded = expanded
             // Trigger layout update
             self.hosting.view.setNeedsLayout()
@@ -173,6 +184,15 @@ public protocol MarkdownUrlHandler {
 
         /// Updates the markdown text and rebuilds the view
         public func updateMarkdown(_ markdown: String) {
+            if !Thread.isMainThread {
+                DispatchQueue.main.async { [weak self] in
+                    self?.updateMarkdown(markdown)
+                }
+                return
+            }
+
+            // Bump version to ignore stale async height callbacks from previous content.
+            self.contentVersion &+= 1
             self.currentMarkdown = markdown
             let view = self.buildView(markdown: markdown)
             self.hosting.rootView = view
@@ -188,6 +208,9 @@ public protocol MarkdownUrlHandler {
         }
 
         private func buildView(markdown: String) -> AnyView {
+            // Capture current version to discard out-of-date callbacks.
+            let version = self.contentVersion
+
             let preprocessedMarkdown: String
             if let preprocessor = self.preprocessor {
                 preprocessedMarkdown = preprocessor.preprocess(text: markdown)
@@ -214,10 +237,12 @@ public protocol MarkdownUrlHandler {
                         markdownUrlHandler: markdownUrlHandler,
                         onExpandChange: { [weak self] newHeight in
                             guard let self else { return }
+                            guard self.contentVersion == version else { return }
                             self.updateHeight(CGFloat(newHeight))
                         },
                         onTruncationChanged: { [weak self] canTruncate in
                             guard let self else { return }
+                            guard self.contentVersion == version else { return }
                             self.currentCanTruncate = canTruncate
                             self.onTruncationChanged?(canTruncate)
                         }
@@ -274,6 +299,13 @@ public protocol MarkdownUrlHandler {
         }
 
         private func updateHeight(_ height: CGFloat) {
+            if !Thread.isMainThread {
+                DispatchQueue.main.async { [weak self] in
+                    self?.updateHeight(height)
+                }
+                return
+            }
+
             let normalized = ceil(height)
             guard normalized.isFinite, normalized > 0 else { return }
 
@@ -340,6 +372,13 @@ public protocol MarkdownUrlHandler {
 
         /// Calculates height for a given constrained width using Auto Layout fitting.
         public func sizeThatFitsWidth(_ width: CGFloat) -> CGSize {
+            if !Thread.isMainThread {
+                return DispatchQueue.main.sync { [weak self] in
+                    guard let self else { return .zero }
+                    return self.sizeThatFitsWidth(width)
+                }
+            }
+
             // Temporarily disable fixed height so measurement reflects SwiftUI's natural height.
             let wasActive = hostingHeightConstraint?.isActive ?? false
             if wasActive { hostingHeightConstraint?.isActive = false }
@@ -402,6 +441,14 @@ public protocol MarkdownUrlHandler {
 
         /// Update the expansion button style
         public func setExpansionButtonStyle(_ style: ExpansionButtonStyle?) {
+            if !Thread.isMainThread {
+                DispatchQueue.main.async { [weak self] in
+                    self?.setExpansionButtonStyle(style)
+                }
+                return
+            }
+
+            self.contentVersion &+= 1
             self.expansionButtonStyle = style
             // Rebuild view to apply new style
             self.hosting.rootView = self.buildView(markdown: currentMarkdown)
@@ -437,6 +484,14 @@ public protocol MarkdownUrlHandler {
         /// Update the soft break mode to control how newlines are rendered
         /// - Parameter mode: `.space` treats newlines as spaces (default Markdown), `.lineBreak` preserves newlines
         public func setSoftBreakMode(_ mode: SoftBreak.Mode) {
+            if !Thread.isMainThread {
+                DispatchQueue.main.async { [weak self] in
+                    self?.setSoftBreakMode(mode)
+                }
+                return
+            }
+
+            self.contentVersion &+= 1
             self.softBreakMode = mode
             // Rebuild view to apply new mode
             self.hosting.rootView = self.buildView(markdown: currentMarkdown)
