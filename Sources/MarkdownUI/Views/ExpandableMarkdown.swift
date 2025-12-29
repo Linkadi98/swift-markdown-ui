@@ -166,7 +166,7 @@ public struct ExpandableMarkdown: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        LazyVStack(alignment: .leading, spacing: 8) {
             // Main content (collapsed/expanded)
             ExpandableBlockSequence(self.blocks)
                 .environment(\.markdownMaxLines, expanded ? nil : self.lineLimit)
