@@ -161,7 +161,8 @@ public protocol MarkdownUrlHandler {
             // Trigger layout update
             self.hosting.view.setNeedsLayout()
             self.hosting.view.layoutIfNeeded()
-            let width = self.bounds.width > 0 ? self.bounds.width : UIScreen.main.bounds.width
+            let width = self.bounds.width
+            guard width > 0 else { return }
             let h = sizeThatFitsWidth(width).height
             if h > 0 { updateHeight(h) }
         }
@@ -180,7 +181,8 @@ public protocol MarkdownUrlHandler {
             self.hosting.view.setNeedsLayout()
             self.hosting.view.layoutIfNeeded()
 
-            let width = self.bounds.width > 0 ? self.bounds.width : UIScreen.main.bounds.width
+            let width = self.bounds.width
+            guard width > 0 else { return }
             let h = sizeThatFitsWidth(width).height
             if h > 0 { updateHeight(h) }
         }
@@ -264,10 +266,11 @@ public protocol MarkdownUrlHandler {
             child.setContentCompressionResistancePriority(.required, for: .vertical)
 
             // Initial height from intrinsic content
-            let h = sizeThatFitsWidth(
-                self.bounds.width > 0 ? self.bounds.width : UIScreen.main.bounds.width
-            ).height
-            if h > 0 { updateHeight(h) }
+            let width = self.bounds.width
+            if width > 0 {
+                let h = sizeThatFitsWidth(width).height
+                if h > 0 { updateHeight(h) }
+            }
         }
 
         private func updateHeight(_ height: CGFloat) {
@@ -322,7 +325,8 @@ public protocol MarkdownUrlHandler {
 
         public override func layoutSubviews() {
             super.layoutSubviews()
-            let width = self.bounds.width > 0 ? self.bounds.width : UIScreen.main.bounds.width
+            let width = self.bounds.width
+            guard width > 0 else { return }
 
             // Measuring inside layoutSubviews can create a loop when the parent adjusts constraints
             // in response to onHeightChange. Only re-measure when width changes or height unknown.
