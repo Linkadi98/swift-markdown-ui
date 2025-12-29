@@ -88,6 +88,8 @@ public protocol MarkdownUrlHandler {
         private var pendingHeight: CGFloat?
         private var isApplyingHeight: Bool = false
 
+        private var hostingHeightConstraint: NSLayoutConstraint?
+
         private let heightEpsilon: CGFloat = 0.5
         private var onHeightChange: ((CGFloat) -> Void)? = nil
         private var onTruncationChanged: ((Bool) -> Void)? = nil
@@ -243,17 +245,19 @@ public protocol MarkdownUrlHandler {
             child.translatesAutoresizingMaskIntoConstraints = false
             addSubview(child)
 
-            // Pin leading, trailing, and top only
-            // Let the hosting view determine its own height based on SwiftUI content
-            let bottom = child.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor)
-            bottom.priority = .required
-
+            // Pin to top/leading/trailing and drive height explicitly.
+            // This prevents vertical stretching (which can make the content appear to shift down)
+            // while still allowing the outer view to size itself via intrinsicContentSize.
             NSLayoutConstraint.activate([
                 child.leadingAnchor.constraint(equalTo: leadingAnchor),
                 child.trailingAnchor.constraint(equalTo: trailingAnchor),
                 child.topAnchor.constraint(equalTo: topAnchor),
-                bottom,
             ])
+
+            let height = child.heightAnchor.constraint(equalToConstant: 1)
+            height.priority = .required
+            height.isActive = true
+            self.hostingHeightConstraint = height
 
             // Set content hugging to high so it doesn't stretch
             child.setContentHuggingPriority(.required, for: .vertical)
@@ -294,6 +298,7 @@ public protocol MarkdownUrlHandler {
 
             currentHeight = normalized
             UIView.performWithoutAnimation {
+                self.hostingHeightConstraint?.constant = normalized
                 invalidateIntrinsicContentSize()
                 setNeedsLayout()
                 onHeightChange?(normalized)
@@ -333,6 +338,11 @@ public protocol MarkdownUrlHandler {
         public func sizeThatFitsWidth(_ width: CGFloat) -> CGSize {
             let maxHeight: CGFloat = 2000
             let targetSize = CGSize(width: width, height: maxHeight)
+
+            // Temporarily disable fixed height so measurement reflects SwiftUI's natural height.
+            let wasActive = hostingHeightConstraint?.isActive ?? false
+            if wasActive { hostingHeightConstraint?.isActive = false }
+
             hosting.view.bounds.size = targetSize
             hosting.view.setNeedsLayout()
             hosting.view.layoutIfNeeded()
@@ -346,6 +356,9 @@ public protocol MarkdownUrlHandler {
                     verticalFittingPriority: .fittingSizeLevel
                 )
             }
+
+            if wasActive { hostingHeightConstraint?.isActive = true }
+
             let h = measured.height > 0 ? measured.height : currentHeight
             return CGSize(width: width, height: ceil(h))
         }
