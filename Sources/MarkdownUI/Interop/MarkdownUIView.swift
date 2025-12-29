@@ -85,8 +85,8 @@ public protocol MarkdownUrlHandler {
         private var hosting: UIHostingController<AnyView>!
         private var currentHeight: CGFloat = 0
         private var lastMeasuredWidth: CGFloat = 0
-        private var pendingHeightWorkItem: DispatchWorkItem?
         private var pendingHeight: CGFloat?
+        private var isApplyingHeight: Bool = false
 
         private let heightEpsilon: CGFloat = 0.5
         private var onHeightChange: ((CGFloat) -> Void)? = nil
@@ -129,6 +129,9 @@ public protocol MarkdownUrlHandler {
 
             super.init(frame: .zero)
             self.backgroundColor = .clear
+            // Prevent SwiftUI content from briefly drawing outside our bounds
+            // while Auto Layout is catching up with intrinsicContentSize changes.
+            self.clipsToBounds = true
             self.preprocessor = mardownTextPreprocessor
             self.markdownUrlHandler = markdownUrlHandler
             self.currentMarkdown = markdown
@@ -146,6 +149,7 @@ public protocol MarkdownUrlHandler {
             let view = self.buildView(markdown: markdown)
             self.hosting = UIHostingController(rootView: view)
             self.hosting.view.backgroundColor = .clear
+            self.hosting.view.clipsToBounds = true
             self.embed(hosting.view)
         }
 
@@ -266,26 +270,31 @@ public protocol MarkdownUrlHandler {
             // Avoid feedback loops from tiny fluctuations.
             guard abs(normalized - currentHeight) > heightEpsilon else { return }
 
-            pendingHeight = normalized
-            pendingHeightWorkItem?.cancel()
+            // Apply synchronously to avoid a 1-frame delay where SwiftUI content can
+            // render using the expanded layout while the containing UIView still has
+            // the old (collapsed) height, causing an overlap + "drop" effect.
+            if isApplyingHeight {
+                pendingHeight = normalized
+                return
+            }
 
-            let work = DispatchWorkItem { [weak self] in
-                guard let self else { return }
-                let nextHeight = self.pendingHeight ?? normalized
-                self.pendingHeight = nil
-                guard abs(nextHeight - self.currentHeight) > self.heightEpsilon else { return }
-
-                self.currentHeight = nextHeight
-
-                UIView.performWithoutAnimation {
-                    self.invalidateIntrinsicContentSize()
-                    self.setNeedsLayout()
-                    self.onHeightChange?(nextHeight)
+            isApplyingHeight = true
+            defer {
+                isApplyingHeight = false
+                if let queued = pendingHeight {
+                    pendingHeight = nil
+                    if abs(queued - currentHeight) > heightEpsilon {
+                        updateHeight(queued)
+                    }
                 }
             }
 
-            pendingHeightWorkItem = work
-            DispatchQueue.main.async(execute: work)
+            currentHeight = normalized
+            UIView.performWithoutAnimation {
+                invalidateIntrinsicContentSize()
+                setNeedsLayout()
+                onHeightChange?(normalized)
+            }
         }
 
         private func getHostingViewPrefersize() -> CGSize {
