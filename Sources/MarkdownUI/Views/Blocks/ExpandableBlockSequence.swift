@@ -113,6 +113,22 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
 
 @available(iOS 15.0, *)
 struct ExpandableBlockSequence: View {
+    private let blocks: [BlockNode]
+    private let blocksIdentity: Int
+
+    init(_ blocks: [BlockNode]) {
+        self.blocks = blocks
+        self.blocksIdentity = blocks.hashValue
+    }
+
+    var body: some View {
+        ExpandableBlockSequenceImpl(self.blocks)
+            .id(self.blocksIdentity)
+    }
+}
+
+@available(iOS 15.0, *)
+private struct ExpandableBlockSequenceImpl: View {
     @Environment(\.markdownMaxLines) private var maxLines
     @Environment(\.markdownShouldExpand) private var isExpanded
 

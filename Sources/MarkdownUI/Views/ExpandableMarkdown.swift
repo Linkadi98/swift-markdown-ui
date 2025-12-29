@@ -217,8 +217,16 @@ public struct ExpandableMarkdown: View {
         .background(collapsedHeightReader)
         // Hidden probe overlay for full height measurement (non-interfering)
         .overlay(fullHeightProbe, alignment: .topLeading)
-        // Remove single reader and rely on dual measurements
-        .id(markdownBinding?.wrappedValue ?? "")  // Force refresh when binding changes
+        // Force refresh when content changes.
+        // Without this, SwiftUI may reuse @State/@StateObject across rapid updates,
+        // leading to stale measurements and unstable heights in lists.
+        .id(contentIdentity)
+    }
+
+    private var contentIdentity: String {
+        // Prefer the bound markdown if present; otherwise use a stable rendering of the content.
+        // This keeps identity stable for equal content while resetting state for different content.
+        markdownBinding?.wrappedValue ?? content.renderMarkdown()
     }
     // Measure collapsed height (with line limit)
     private var collapsedHeightReader: some View {
