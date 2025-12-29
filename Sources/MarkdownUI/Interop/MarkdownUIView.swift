@@ -340,28 +340,54 @@ public protocol MarkdownUrlHandler {
 
         /// Calculates height for a given constrained width using Auto Layout fitting.
         public func sizeThatFitsWidth(_ width: CGFloat) -> CGSize {
-            let maxHeight: CGFloat = 2000
-            let targetSize = CGSize(width: width, height: maxHeight)
-
             // Temporarily disable fixed height so measurement reflects SwiftUI's natural height.
             let wasActive = hostingHeightConstraint?.isActive ?? false
             if wasActive { hostingHeightConstraint?.isActive = false }
-
-            hosting.view.bounds.size = targetSize
-            hosting.view.setNeedsLayout()
-            hosting.view.layoutIfNeeded()
-            let measured: CGSize
-            if #available(iOS 16.0, *) {
-                measured = hosting.sizeThatFits(in: targetSize)
-            } else {
-                measured = hosting.view.systemLayoutSizeFitting(
-                    targetSize,
-                    withHorizontalFittingPriority: .required,
-                    verticalFittingPriority: .fittingSizeLevel
-                )
+            defer {
+                if wasActive { hostingHeightConstraint?.isActive = true }
             }
 
-            if wasActive { hostingHeightConstraint?.isActive = true }
+            // Measure with an adaptive height proposal.
+            // Some sizing APIs effectively "cap" the result by the proposed height; for very
+            // long content we therefore keep increasing the proposal until we stop hitting the cap.
+            //
+            // Note: we still need a finite upper bound because Auto Layout and sizeThatFits
+            // require finite dimensions. We use a system-derived cap to avoid tying behavior
+            // to any content-specific constant.
+            let absoluteCap: CGFloat = CGFloat.greatestFiniteMagnitude / 4
+            var proposedMaxHeight: CGFloat = max(ceil(currentHeight), 1)
+            var measured: CGSize = .zero
+            var lastProposed: CGFloat = 0
+
+            while proposedMaxHeight.isFinite, proposedMaxHeight < absoluteCap {
+                if proposedMaxHeight == lastProposed { break }
+                lastProposed = proposedMaxHeight
+
+                let targetSize = CGSize(width: width, height: proposedMaxHeight)
+                hosting.view.bounds.size = targetSize
+                hosting.view.setNeedsLayout()
+                hosting.view.layoutIfNeeded()
+
+                if #available(iOS 16.0, *) {
+                    measured = hosting.sizeThatFits(in: targetSize)
+                } else {
+                    measured = hosting.view.systemLayoutSizeFitting(
+                        targetSize,
+                        withHorizontalFittingPriority: .required,
+                        verticalFittingPriority: .fittingSizeLevel
+                    )
+                }
+
+                // If we didn't hit the cap, we're done.
+                if measured.height > 0, measured.height < (proposedMaxHeight - 1) {
+                    break
+                }
+
+                // We likely hit the cap. Grow the proposal relative to what we observed.
+                // This keeps the number of iterations low even for very long content.
+                let next = max(proposedMaxHeight * 2, max(ceil(measured.height) * 2, proposedMaxHeight + 1))
+                proposedMaxHeight = min(next, absoluteCap)
+            }
 
             let h = measured.height > 0 ? measured.height : currentHeight
             return CGSize(width: width, height: ceil(h))
