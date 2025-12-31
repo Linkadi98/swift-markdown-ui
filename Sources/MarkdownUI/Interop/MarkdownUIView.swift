@@ -82,7 +82,7 @@ public protocol MarkdownUrlHandler {
 
     @available(iOS 15.0, *)
     public final class MarkdownUIView: UIView {
-        private var hosting: AutoLayoutHostingController!
+        private var hosting: UIHostingController<AnyView>!
         private var currentHeight: CGFloat = 0
         private var lastMeasuredWidth: CGFloat = 0
         private var pendingHeight: CGFloat?
@@ -153,7 +153,7 @@ public protocol MarkdownUrlHandler {
             self.onTruncationChanged = onTruncationChanged
 
             let view = self.buildView(markdown: markdown)
-            self.hosting = AutoLayoutHostingController(rootView: view)
+            self.hosting = UIHostingController(rootView: view)
             self.hosting.view.backgroundColor = .clear
             self.hosting.view.clipsToBounds = true
             self.embed(hosting.view)
@@ -501,30 +501,4 @@ public protocol MarkdownUrlHandler {
             self.hosting.view.layoutIfNeeded()
         }
     }
-
-class AutoLayoutHostingController: UIHostingController<AnyView> {
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Ensure view is added and constraints are set up
-        view.translatesAutoresizingMaskIntoConstraints = false
-        // Activate constraints for intrinsic size
-        NSLayoutConstraint.activate([
-            view.heightAnchor.constraint(equalToConstant: view.intrinsicContentSize.height),
-            view.widthAnchor.constraint(equalToConstant: view.intrinsicContentSize.width)
-        ])
-    }
-    // Can also update constraints in viewDidLayoutSubviews if content changes dynamically
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        // Update height/width if intrinsic size changes
-        if #available(iOS 15.0, *) {
-            view.constraints.forEach { constraint in
-                if constraint.firstAttribute == .height || constraint.firstAttribute == .width {
-                    constraint.constant = view.intrinsicContentSize.height
-                }
-            }
-        }
-    }
-}
-
 #endif
