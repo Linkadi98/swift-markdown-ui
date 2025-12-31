@@ -154,6 +154,10 @@ public protocol MarkdownUrlHandler {
         private var showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool = true
         private var expansionButtonStyle: ExpansionButtonStyle?
         private var softBreakMode: SoftBreak.Mode = .lineBreak  // Default to preserve newlines
+        
+        public override var intrinsicContentSize: CGSize {
+          CGSize(width: UIView.noIntrinsicMetric, height: currentHeight > 0 ? currentHeight : UIView.noIntrinsicMetric)
+        }
 
         public init(
             markdown: String,
@@ -378,7 +382,7 @@ public protocol MarkdownUrlHandler {
                 self.hostingHeightConstraint?.constant = normalized
                 hosting.view.invalidateIntrinsicContentSize()
                 invalidateIntrinsicContentSize()
-                setNeedsLayout()
+                layoutIfNeeded()
                 onHeightChange?(normalized)
             }
         }
