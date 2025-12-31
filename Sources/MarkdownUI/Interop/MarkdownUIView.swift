@@ -153,7 +153,7 @@ public protocol MarkdownUrlHandler {
             self.onTruncationChanged = onTruncationChanged
 
             let view = self.buildView(markdown: markdown)
-            self.hosting = UIHostingController(rootView: view)
+            self.hosting = AutoLayoutHostingController(rootView: view)
             self.hosting.view.backgroundColor = .clear
             self.hosting.view.clipsToBounds = true
             self.embed(hosting.view)
