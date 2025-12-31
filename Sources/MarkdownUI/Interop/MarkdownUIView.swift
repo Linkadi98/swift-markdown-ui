@@ -16,9 +16,9 @@ private struct _ViewHeightPreferenceKey: PreferenceKey {
 }
 
 @available(iOS 15.0, *)
-private extension View {
+extension View {
     /// Reports the rendered height of this view whenever it changes.
-    func reportHeight(_ onChange: @escaping (CGFloat) -> Void) -> some View {
+    fileprivate func reportHeight(_ onChange: @escaping (CGFloat) -> Void) -> some View {
         background(
             GeometryReader { proxy in
                 Color.clear
@@ -32,7 +32,7 @@ private extension View {
 @available(iOS 15.0, *)
 struct ExpandableMarkdownWrapper: View {
     @ObservedObject var expandedStateHolder: ExpandedStateHolder
-    
+
     @State private var _lastReportedHeight: CGFloat = 0
     private let _heightEpsilon: CGFloat = 0.5
 
@@ -133,8 +133,6 @@ public protocol MarkdownUrlHandler {
         // when markdown/config is updated rapidly (e.g. table/collection resets).
         private var contentVersion: UInt = 0
 
-        private var hostingHeightConstraint: NSLayoutConstraint?
-
         private let heightEpsilon: CGFloat = 0.5
         private var onHeightChange: ((CGFloat) -> Void)? = nil
         private var onTruncationChanged: ((Bool) -> Void)? = nil
@@ -154,9 +152,11 @@ public protocol MarkdownUrlHandler {
         private var showExpansionButtonOnlyWhenCollapsedAndTruncated: Bool = true
         private var expansionButtonStyle: ExpansionButtonStyle?
         private var softBreakMode: SoftBreak.Mode = .lineBreak  // Default to preserve newlines
-        
+
         public override var intrinsicContentSize: CGSize {
-          CGSize(width: UIView.noIntrinsicMetric, height: currentHeight > 0 ? currentHeight : UIView.noIntrinsicMetric)
+            CGSize(
+                width: UIView.noIntrinsicMetric,
+                height: currentHeight > 0 ? currentHeight : UIView.noIntrinsicMetric)
         }
 
         public init(
@@ -318,23 +318,14 @@ public protocol MarkdownUrlHandler {
             child.translatesAutoresizingMaskIntoConstraints = false
             addSubview(child)
 
-            // Pin to top/leading/trailing and drive height explicitly.
-            // This prevents vertical stretching (which can make the content appear to shift down)
-            // while still allowing the outer view to size itself via intrinsicContentSize.
+            // Pin to all edges. The outer view (MarkdownUIView) controls its height via
+            // intrinsicContentSize (currentHeight), allowing Auto Layout to reflow as SwiftUI content changes.
             NSLayoutConstraint.activate([
                 child.leadingAnchor.constraint(equalTo: leadingAnchor),
                 child.trailingAnchor.constraint(equalTo: trailingAnchor),
                 child.topAnchor.constraint(equalTo: topAnchor),
+                child.bottomAnchor.constraint(equalTo: bottomAnchor),
             ])
-
-            let height = child.heightAnchor.constraint(equalToConstant: 1)
-            height.priority = .required
-            height.isActive = true
-            self.hostingHeightConstraint = height
-
-            // Set content hugging to high so it doesn't stretch
-            child.setContentHuggingPriority(.required, for: .vertical)
-            child.setContentCompressionResistancePriority(.required, for: .vertical)
 
             // Initial height from intrinsic content
             let width = self.bounds.width
@@ -379,10 +370,9 @@ public protocol MarkdownUrlHandler {
 
             currentHeight = normalized
             UIView.performWithoutAnimation {
-                self.hostingHeightConstraint?.constant = normalized
                 hosting.view.invalidateIntrinsicContentSize()
-                invalidateIntrinsicContentSize()
-                layoutIfNeeded()
+                view.invalidateIntrinsicContentSize()
+                view.layoutIfNeeded()
                 onHeightChange?(normalized)
             }
         }
@@ -417,13 +407,6 @@ public protocol MarkdownUrlHandler {
                     guard let self else { return .zero }
                     return self.sizeThatFitsWidth(width)
                 }
-            }
-
-            // Temporarily disable fixed height so measurement reflects SwiftUI's natural height.
-            let wasActive = hostingHeightConstraint?.isActive ?? false
-            if wasActive { hostingHeightConstraint?.isActive = false }
-            defer {
-                if wasActive { hostingHeightConstraint?.isActive = true }
             }
 
             // Measure with an adaptive height proposal.
