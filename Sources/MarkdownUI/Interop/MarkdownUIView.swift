@@ -291,12 +291,11 @@ public protocol MarkdownUrlHandler {
                             self.currentCanTruncate = canTruncate
                             self.onTruncationChanged?(canTruncate)
                         }
-                    ).fixedSize(horizontal: false, vertical: true)
+                    )
                 )
             } else {
                 view = AnyView(
                     Markdown(preprocessedMarkdown)
-                        .fixedSize(horizontal: false, vertical: true)
                         .markdownTheme(theme)
                         .markdownSoftBreakMode(self.softBreakMode)
                         .environment(
@@ -318,14 +317,21 @@ public protocol MarkdownUrlHandler {
             child.translatesAutoresizingMaskIntoConstraints = false
             addSubview(child)
 
-            // Pin to all edges. The outer view (MarkdownUIView) controls its height via
-            // intrinsicContentSize (currentHeight), allowing Auto Layout to reflow as SwiftUI content changes.
+            // Pin horizontally + to top. Avoid an equal bottom constraint because the parent
+            // can temporarily be height=0 (before the first measurement / during transitions),
+            // which would force the hosting view to 0 and prevent SwiftUI from laying out.
             NSLayoutConstraint.activate([
                 child.leadingAnchor.constraint(equalTo: leadingAnchor),
                 child.trailingAnchor.constraint(equalTo: trailingAnchor),
                 child.topAnchor.constraint(equalTo: topAnchor),
-                child.bottomAnchor.constraint(equalTo: bottomAnchor),
             ])
+
+            let bottom = child.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor)
+            bottom.priority = .defaultLow
+            bottom.isActive = true
+
+            child.setContentHuggingPriority(.required, for: .vertical)
+            child.setContentCompressionResistancePriority(.required, for: .vertical)
 
             // Initial height from intrinsic content
             let width = self.bounds.width
