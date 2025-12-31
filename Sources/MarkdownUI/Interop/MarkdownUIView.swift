@@ -246,11 +246,12 @@ public protocol MarkdownUrlHandler {
                             self.currentCanTruncate = canTruncate
                             self.onTruncationChanged?(canTruncate)
                         }
-                    )
-                ).fixedSize(horizontal: false, vertical: true)
+                    ).fixedSize(horizontal: false, vertical: true)
+                )
             } else {
                 view = AnyView(
                     Markdown(preprocessedMarkdown)
+                        .fixedSize(horizontal: false, vertical: true)
                         .markdownTheme(theme)
                         .markdownSoftBreakMode(self.softBreakMode)
                         .environment(
@@ -261,7 +262,7 @@ public protocol MarkdownUrlHandler {
                                 }
                                 return .discarded
                             }
-                        )).fixedSize(horizontal: false, vertical: true)
+                        ))
             }
             return view
         }
