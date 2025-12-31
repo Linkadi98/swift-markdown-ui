@@ -280,6 +280,7 @@ public protocol MarkdownUrlHandler {
                 child.leadingAnchor.constraint(equalTo: leadingAnchor),
                 child.trailingAnchor.constraint(equalTo: trailingAnchor),
                 child.topAnchor.constraint(equalTo: topAnchor),
+                child.bottom.constraint(equalTo: bottomAnchor)
             ])
 
             let height = child.heightAnchor.constraint(equalToConstant: 1)
