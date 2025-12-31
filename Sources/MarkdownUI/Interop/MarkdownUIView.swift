@@ -335,6 +335,7 @@ public protocol MarkdownUrlHandler {
             currentHeight = normalized
             UIView.performWithoutAnimation {
                 self.hostingHeightConstraint?.constant = normalized
+                hosting.view.invalidateIntrinsicContentSize()
                 invalidateIntrinsicContentSize()
                 setNeedsLayout()
                 onHeightChange?(normalized)
