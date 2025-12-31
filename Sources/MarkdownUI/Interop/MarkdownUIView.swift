@@ -82,7 +82,7 @@ public protocol MarkdownUrlHandler {
 
     @available(iOS 15.0, *)
     public final class MarkdownUIView: UIView {
-        private var hosting: AutoLayoutHostingController<AnyView>!
+        private var hosting: AutoLayoutHostingController!
         private var currentHeight: CGFloat = 0
         private var lastMeasuredWidth: CGFloat = 0
         private var pendingHeight: CGFloat?
@@ -501,7 +501,7 @@ public protocol MarkdownUrlHandler {
         }
     }
 
-class AutoLayoutHostingController: UIHostingController<ContentView> {
+class AutoLayoutHostingController: UIHostingController<AnyView> {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Ensure view is added and constraints are set up
