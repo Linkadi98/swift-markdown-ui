@@ -280,7 +280,6 @@ public protocol MarkdownUrlHandler {
                 child.leadingAnchor.constraint(equalTo: leadingAnchor),
                 child.trailingAnchor.constraint(equalTo: trailingAnchor),
                 child.topAnchor.constraint(equalTo: topAnchor),
-                child.bottomAnchor.constraint(equalTo: bottomAnchor)
             ])
 
             let height = child.heightAnchor.constraint(equalToConstant: 1)
@@ -349,13 +348,6 @@ public protocol MarkdownUrlHandler {
                 withHorizontalFittingPriority: .required,
                 verticalFittingPriority: .fittingSizeLevel
             )
-        }
-
-        public override var intrinsicContentSize: CGSize {
-            guard currentHeight > 0 else {
-                return super.intrinsicContentSize
-            }
-            return CGSize(width: UIView.noIntrinsicMetric, height: currentHeight)
         }
 
         public override func layoutSubviews() {
