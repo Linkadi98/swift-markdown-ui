@@ -6,8 +6,35 @@ class ExpandedStateHolder: ObservableObject {
 }
 
 @available(iOS 15.0, *)
+private struct _ViewHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        // Keep the latest non-zero height (helps avoid transient 0 during transitions)
+        let next = nextValue()
+        if next > 0 { value = next }
+    }
+}
+
+@available(iOS 15.0, *)
+private extension View {
+    /// Reports the rendered height of this view whenever it changes.
+    func reportHeight(_ onChange: @escaping (CGFloat) -> Void) -> some View {
+        background(
+            GeometryReader { proxy in
+                Color.clear
+                    .preference(key: _ViewHeightPreferenceKey.self, value: proxy.size.height)
+            }
+        )
+        .onPreferenceChange(_ViewHeightPreferenceKey.self, perform: onChange)
+    }
+}
+
+@available(iOS 15.0, *)
 struct ExpandableMarkdownWrapper: View {
     @ObservedObject var expandedStateHolder: ExpandedStateHolder
+    
+    @State private var _lastReportedHeight: CGFloat = 0
+    private let _heightEpsilon: CGFloat = 0.5
 
     let markdown: String
     let lineLimit: Int
@@ -52,6 +79,13 @@ struct ExpandableMarkdownWrapper: View {
                         return .discarded
                     }
                 )
+                .reportHeight { h in
+                    guard h.isFinite, h > 0 else { return }
+                    if abs(h - _lastReportedHeight) > _heightEpsilon {
+                        _lastReportedHeight = h
+                        onExpandChange(Double(h))
+                    }
+                }
         } else {
             expandableView
                 .environment(
@@ -63,6 +97,13 @@ struct ExpandableMarkdownWrapper: View {
                         return .discarded
                     }
                 )
+                .reportHeight { h in
+                    guard h.isFinite, h > 0 else { return }
+                    if abs(h - _lastReportedHeight) > _heightEpsilon {
+                        _lastReportedHeight = h
+                        onExpandChange(Double(h))
+                    }
+                }
         }
     }
 }
