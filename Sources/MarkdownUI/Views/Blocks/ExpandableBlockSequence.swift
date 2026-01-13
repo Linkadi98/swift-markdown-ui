@@ -17,10 +17,15 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
     func applyMeasuredLines(_ values: [Int: Int]) {
         // Ignore empty snapshots to avoid oscillation between [:] and measured values
         guard !values.isEmpty else { return }
-        // Replace with the latest aggregated snapshot (BlockLinesPreferenceKey already sums by index)
-        if values == blockLines { return }
+        // Merge with existing using monotonic non-decreasing counts to avoid flapping
+        // when multiple measuring passes produce slightly different numbers.
+        var merged = blockLines
+        for (k, v) in values {
+            merged[k] = max(v, merged[k] ?? 0)
+        }
+        if merged == blockLines { return }
         mdDbg("📊 applyMeasuredLines - snapshot: \(values)")
-        blockLines = values
+        blockLines = merged
         // Mark ready as soon as we have any measurements; continue to refine as more arrive
         if !isMeasuredReady && values.count > 0 {
             isMeasuredReady = true
@@ -32,7 +37,7 @@ final class ExpandableBlockSequenceViewModel: ObservableObject {
         // Stop the hidden measuring tree once measurements have been stable for a short period.
         // Some block types don't publish line counts, so waiting for count == totalBlocks
         // would keep measuring forever for long documents.
-        isMeasuring = true
+        if !isMeasuring { isMeasuring = true }
         stopMeasuringWorkItem?.cancel()
         let work = DispatchWorkItem { [weak self] in
             self?.isMeasuring = false
