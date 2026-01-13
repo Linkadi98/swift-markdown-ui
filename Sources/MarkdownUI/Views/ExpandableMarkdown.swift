@@ -308,5 +308,3 @@ extension View {
         return self.environment(\.expansionButtonStyle, style)
     }
 }
-
-// Extension to make ExpandableMarkdown copyable - REMOVED (not needed with environment approach)

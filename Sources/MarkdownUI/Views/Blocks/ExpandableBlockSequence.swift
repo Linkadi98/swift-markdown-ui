@@ -166,7 +166,9 @@ private struct ExpandableBlockSequenceImpl: View {
         // Start measurement immediately on appear without affecting layout
         .background(
             Group {
-                if viewModel.isMeasuring || isExpanded {
+                // Avoid measuring when used by the full-height probe (maxLines == nil)
+                // to prevent duplicate BlockLinesPreferenceKey emissions.
+                if (viewModel.isMeasuring && maxLines != nil) || isExpanded {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(self.blocks, id: \.self) { element in
                             element.value
