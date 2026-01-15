@@ -28,6 +28,8 @@ struct HeadingView: View {
     TextStyleAttributesReader { _ in
       InlineText(self.content)
         .lineLimit(self.remainingLines >= 1000 ? nil : self.remainingLines)
+        .truncationMode(.tail)
+        .allowsTightening(true)
     }
   }
 }

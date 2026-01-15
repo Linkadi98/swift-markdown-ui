@@ -20,6 +20,8 @@ private struct InlineLineCountReporter: View {
     ZStack(alignment: .topLeading) {
       content
         .lineLimit(remainingLines >= 1000 ? nil : remainingLines)
+        .truncationMode(.tail)
+        .allowsTightening(true)
         .background(
           GeometryReader { proxy in
             Color.clear.onAppear { totalHeight = proxy.size.height }
@@ -29,6 +31,8 @@ private struct InlineLineCountReporter: View {
 
       content
         .lineLimit(1)
+        .truncationMode(.tail)
+        .allowsTightening(true)
         .opacity(0.001)
         .accessibilityHidden(true)
         .background(
@@ -40,6 +44,8 @@ private struct InlineLineCountReporter: View {
 
       content
         .lineLimit(2)
+        .truncationMode(.tail)
+        .allowsTightening(true)
         .opacity(0.001)
         .accessibilityHidden(true)
         .background(

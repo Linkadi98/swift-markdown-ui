@@ -29,6 +29,8 @@ struct CodeBlockView: View {
     TextStyleAttributesReader { _ in
       self.label
         .lineLimit(self.remainingLines >= 1000 ? nil : self.remainingLines)
+        .truncationMode(.tail)
+        .allowsTightening(true)
     }
   }
 
